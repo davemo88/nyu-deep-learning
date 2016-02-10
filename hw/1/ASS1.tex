@@ -1,0 +1,48 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\setlength{\parindent}{0in}
+\begin{document}
+\newcommand{\p}{\partial}
+\newcommand{\xo}{x_{\text{out}}}
+\newcommand{\Xo}{X_{\text{out}}}
+\renewcommand{\xi}{x_{\text{in}}}
+\renewcommand{\Xi}{X_{\text{in}}}
+{\bf{Team Hodge Theaters}}\\
+David Kasofsky  -- dk2353@nyu.edu\\
+Jonay Tr\'enous -- jgt275@nyu.edu\\
+\vspace*{2cm}
+
+\centerline{\Huge{\bf{Assignment 1}}}
+\section{Backpropagation}
+\addtolength{\jot}{1em}
+\subsection{}
+By the Chain Rule, we can write
+\begin{align*}
+  \dfrac{\p E}{\p x_{in}} &= \dfrac{\p E}{\p x_{out}}\cdot \dfrac{\p x_{out}}{\p x_{in}} \\
+ &= \dfrac{\p E}{\p x_{out}}\cdot \dfrac{\p(1+\exp(-x_{in}))^{-1}}{\p x_{in}}\\
+&= \dfrac{\p E}{\p x_{out}}\cdot (1+\exp(-x_{in}))^{-2} \exp(-x_{in}) \\
+&= \dfrac{\p E}{\p  x_{out}}\cdot \exp(-x_{in}) \cdot x_{out}^2 \\
+\end{align*}
+\subsection{}
+First, consider the case $i\neq j$:
+\begin{align*}
+  \dfrac{\p(\Xo)_i}{\p (\Xi)_j} &\overset{\text{Prod. Rule}}{=} \dfrac{\p \exp(-\beta (\Xi)_i)}{\p (\Xi)_j}\left(\sum_k \exp(-\beta(\Xi)_k)\right)^{-1}+ \dfrac{\p \left(\sum_k \exp(-\beta(\Xi)_k)\right)^{-1}}{\p (\Xi)_j} \exp(-\beta (\Xi)_i)  \\
+&= 0 + \beta \dfrac{\exp(-\beta (\Xi)_j) \exp(-\beta (\Xi)_i)}{\left(\sum_k \exp(-\beta(\Xi)_k)\right)^{2}} \\
+&= \beta (\Xo)_j (\Xo)_i   
+\end{align*}
+In the opposite case $i=j$, the first term will not be zero:
+\begin{align*}
+  \dfrac{\p(\Xo)_i}{\p (\Xi)_i} &\overset{\text{Prod. Rule}}{=} \dfrac{\p \exp(-\beta (\Xi)_i)}{\p (\Xi)_i}\left(\sum_k \exp(-\beta(\Xi)_k)\right)^{-1}+ \dfrac{\p \left(\sum_k \exp(-\beta(\Xi)_k)\right)^{-1}}{\p (\Xi)_i} \exp(-\beta (\Xi)_i)  \\
+&= \beta \dfrac{\exp(-\beta (\Xi)_i) \exp(-\beta (\Xi)_i)}{\left(\sum_k \exp(-\beta(\Xi)_k)\right)^{2}} - \beta \dfrac{\exp(-\beta (\Xi)_i)}{\sum_k \exp(-\beta(\Xi)_k)}\\
+&= \beta \left((\Xo)^2_i - (\Xo)_i\right)   
+\end{align*}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
