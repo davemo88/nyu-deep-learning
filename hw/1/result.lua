@@ -4,7 +4,30 @@
 -- generate predicitions csv for test data using model
 
 require 'torch'
-require 'xlua'
+require 'xlua' -- progress bars
+require 'nn' -- required to load model 
+
+-- parse command line arguments
+if not opt then
+   print '==> processing options'
+   cmd = torch.CmdLine()
+   cmd:text()
+   cmd:text('MNIST Dataset Preprocessing')
+   cmd:text()
+   cmd:text('Options:')
+   cmd:option('-size', 'small', 'how many samples do we load: small | full')
+   cmd:text()
+   opt = cmd:parse(arg or {})
+end
+
+-- allow for full or small 
+if opt.size == 'full' then
+   print '==> using regular, full training data'
+   tesize = 10000
+elseif opt.size == 'small' then
+   print '==> using reduced training data, for fast experiments'
+   tesize = 1000
+end
 
 print '==> downloading dataset'
 
@@ -21,13 +44,23 @@ end
 
 print '==> downloading saved model'
 
-model_location = 'http://cs.nyu.edu/~dk2353/deeplearning/hw/1/model.t7b'
+model_file = 'model.t7b'
 
-os.execute('wget ' .. model_location)
+if not paths.filep(model_file) then
+-- go grab the model file if we don't already have it
+    os.execute('wget ' .. 'http://cs.nyu.edu/~dk2353/deeplearning/hw/1/model.t7b')
+end
 
-saved = torch.load(model_location)
+saved = torch.load(model_file)
 
 print '==> normalize test data using training mean and std'
+
+loaded = torch.load(test_file, 'ascii')
+testData = {
+   data = loaded.data,
+   labels = loaded.labels,
+   size = function() return tesize end
+}
 
 -- Normalize test data, using the training mean/std
 -- we saved the training mean/std with our model
@@ -35,29 +68,48 @@ testData.data[{ {},1,{},{} }]:add(-saved.mean)
 testData.data[{ {},1,{},{} }]:div(saved.std)
 
 -- sanity check
-testMean = testData.data[{ {},1 }]:mean()
-testStd = testData.data[{ {},1 }]:std()
-print('test data mean: ' .. testMean)
-print('test data standard deviation: ' .. testStd)
+-- testMean = testData.data[{ {},1 }]:mean()
+-- testStd = testData.data[{ {},1 }]:std()
+-- print('test data mean: ' .. testMean)
+-- print('test data standard deviation: ' .. testStd)
 
 m = saved.model
 m:evaluate()
 
+-- function to get the index of maximum value
+-- i.e. the class with the highest probability
+-- adapted from http://www.lua.org/pil/5.1.html
+function maximum (a)
+    local mi = 1          -- maximum index
+    local m = a[mi]       -- maximum value
+    for i,val in ipairs(a) do
+        if val > m then
+            mi = i
+            m = val
+        end
+    end
+    return m, mi
+end
+
 f = io.open('predictions.csv', 'w')
+
+f:write('Id,Prediction\n')
 
 print('==> testing on test set:')
 for t = 1,testData:size() do
     -- disp progress
     xlua.progress(t, testData:size())
-
     -- get new sample
     -- cpa only so don't need to worry about input:cuda()
     local input = testData.data[t]:double()
     local target = testData.labels[t]
 
     -- test sample
-    local pred = model:forward(input)
-    f:write(t .. ',' .. pred .. '\n')
+    local pred = m:forward(input)
+    print(pred)
+-- get the id of the class with the highest probability
+    prob, pred_class = maximum(torch.totable(pred))
+    f:write(t .. ',' .. pred_class .. '\n')
 end
 
 f:close()

@@ -3,4 +3,7 @@
 *.synctex.gz
 *.tex~
 *.el
-hw/*/materials/
+hw/*/materials/*
+hw/*/results/
+auto/
+sftp-config.json
