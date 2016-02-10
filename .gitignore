@@ -1,1 +1,6 @@
+*.aux
+*.log
+*.synctex.gz
+*.tex~
+*.el
 hw/*/materials/
