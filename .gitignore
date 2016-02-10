@@ -3,6 +3,7 @@
 *.synctex.gz
 *.tex~
 *.el
+*.t7
 hw/*/materials/*
 hw/*/results/
 auto/
