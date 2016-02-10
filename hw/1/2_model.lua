@@ -14,8 +14,9 @@
 ----------------------------------------------------------------------
 
 require 'torch'   -- torch
-require 'image'   -- for image transforms
+require 'image'   -- for image 
 require 'nn'      -- provides all sorts of trainable modules/layers
+require 'Dropconnect'
 
 ----------------------------------------------------------------------
 -- parse command line arguments
@@ -121,7 +122,7 @@ elseif opt.model == 'convnet' then
 
       -- stage 3 : standard 2-layer neural network
       model:add(nn.Reshape(nstates[2]*filtsize*filtsize))
-      model:add(nn.Linear(nstates[2]*filtsize*filtsize, nstates[3]))
+      model:add(nn.LinearDropconnect(nstates[2]*filtsize*filtsize, nstates[3], 0.5))
       model:add(nn.Tanh())
       model:add(nn.Linear(nstates[3], noutputs))
    end
