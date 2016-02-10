@@ -1,0 +1,22 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+
+\begin{document}
+\bf{Team Hodge Theaters}\\
+David Kasofsky -- dk2353@nyu.edu\\
+Jonay Tr\'enous -- jgt275@nyu.edu
+\vspace*{2cm}
+\centerline{\Huge{\bf{Assignment 1}}}
+\section{Backpropagation}
+\subsection{}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
