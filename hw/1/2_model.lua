@@ -74,6 +74,8 @@ elseif opt.model == 'mlp' then
 
 elseif opt.model == 'convnet' then
 
+
+-- no gpus for this assignment so don't care about this case
    if opt.type == 'cuda' then
       -- a typical modern convolution network (conv+relu+pool)
       model = nn.Sequential()
