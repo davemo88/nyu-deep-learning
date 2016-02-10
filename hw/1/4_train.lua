@@ -201,7 +201,7 @@ function train()
    end
 
    -- save/log current net
-   local filename = paths.concat(opt.save, 'model.t7b')
+   local filename = paths.concat(opt.save, epoch .. '_modelname.t7b')
    os.execute('mkdir -p ' .. sys.dirname(filename))
    print('==> saving model to '..filename)
    save = {mean = mean,
