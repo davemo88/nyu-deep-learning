@@ -5,7 +5,8 @@
 
 require 'torch'
 require 'xlua' -- progress bars
-require 'nn' -- required to load model 
+require 'nn' -- required to load model
+require 'Dropconnect' -- required to load model
 
 -- parse command line arguments
 if not opt then
@@ -42,13 +43,22 @@ if not paths.filep(test_file) then
    os.execute('tar xvf ' .. paths.basename(tar))
 end
 
+print '==> downloading Dropconnect code'
+
+dropconnect_code = 'Dropconnect.lua'
+
+if not paths.filep(dropconnect_code) then
+-- go grab the model file if we don't already have it
+    os.execute('wget ' .. 'http://cs.nyu.edu/~dk2353/deeplearning/hw/1/' .. dropconnect_code)
+end
+
 print '==> downloading saved model'
 
-model_file = 'model.t7b'
+model_file = '4_relu_maxpool_dropconnect.t7b'
 
 if not paths.filep(model_file) then
 -- go grab the model file if we don't already have it
-    os.execute('wget ' .. 'http://cs.nyu.edu/~dk2353/deeplearning/hw/1/model.t7b')
+    os.execute('wget ' .. 'http://cs.nyu.edu/~dk2353/deeplearning/hw/1/' .. model_file)
 end
 
 saved = torch.load(model_file)
@@ -62,16 +72,18 @@ testData = {
    size = function() return tesize end
 }
 
+testData.data = testData.data:float()
+
 -- Normalize test data, using the training mean/std
 -- we saved the training mean/std with our model
 testData.data[{ {},1,{},{} }]:add(-saved.mean)
 testData.data[{ {},1,{},{} }]:div(saved.std)
 
--- sanity check
--- testMean = testData.data[{ {},1 }]:mean()
--- testStd = testData.data[{ {},1 }]:std()
--- print('test data mean: ' .. testMean)
--- print('test data standard deviation: ' .. testStd)
+--sanity check
+testMean = testData.data[{ {},1 }]:mean()
+testStd = testData.data[{ {},1 }]:std()
+print('test data mean: ' .. testMean)
+print('test data standard deviation: ' .. testStd)
 
 m = saved.model
 m:evaluate()
@@ -106,7 +118,6 @@ for t = 1,testData:size() do
 
     -- test sample
     local pred = m:forward(input)
-    print(pred)
 -- get the id of the class with the highest probability
     prob, pred_class = maximum(torch.totable(pred))
     f:write(t .. ',' .. pred_class .. '\n')
