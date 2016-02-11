@@ -48,6 +48,7 @@ In our experiments we started with the Stock Model as a baseline, and compared i
 Dropconnect is a generalization of the widely used Dropout regularization technique proposed in \autocite{wan2013regularization}. It is used in the current best-performing MNIST ConvNet \autocite{wan2013regularization}. In a dropout layer, the output of each node is set to zero with some probability p \autocite{srivastava2014dropout}. This is equivalent to temporarily setting the weights of all outgoing edges of this node to zero, as if the node has dropped out of the network. Dropconnect generalizes this idea: In a Dropconnect layer, every incoming connection to a node is dropped with some probability p \autocite{wan2013regularization}. 
 \paragraph*{ReLU/MaxPool}
 
+
 \paragraph*{Dropconnect \& ReLU/MaxPool}
 Dropconnect is bettter with Relu\\
 \begin{tabular}[h]{l | l l l l l l l l}
@@ -61,6 +62,7 @@ Epoch & \multicolumn{2}{c}{Stock Model} & \multicolumn{2}{c}{Dropconnect} &
     4&  99.49& 99.24 &99.32&99.29& 99.34&98.88&\\
     
 \end{tabular}
+
 \end{document}
 
 %%% Local Variables:
