@@ -1,8 +1,9 @@
 \documentclass{article}
-
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
+\usepackage[backend=biber]{biblatex}
+\addbibresource{bib.bib}
 \setlength{\parindent}{0in}
 \begin{document}
 \newcommand{\p}{\partial}
@@ -39,7 +40,27 @@ In the opposite case $i=j$, the first term will not be zero:
 &= \beta \dfrac{\exp(-\beta (\Xi)_i) \exp(-\beta (\Xi)_i)}{\left(\sum_k \exp(-\beta(\Xi)_k)\right)^{2}} - \beta \dfrac{\exp(-\beta (\Xi)_i)}{\sum_k \exp(-\beta(\Xi)_k)}\\
 &= \beta \left((\Xo)^2_i - (\Xo)_i\right)   
 \end{align*}
+\section{Torch}
+MNIST is a public database of images of handwritten digits, commonly used for benchmarking of image recognition algorithms.
 
+In our experiments we started with the Stock Model as a baseline, and compared its performance to three altered versions:
+\paragraph*{Dropconnect}
+Dropconnect is a generalization of the widely used Dropout regularization technique proposed in \autocite{wan2013regularization}. It is used in the current best-performing MNIST ConvNet \autocite{wan2013regularization}. In a dropout layer, the output of each node is set to zero with some probability p \autocite{srivastava2014dropout}. This is equivalent to temporarily setting the weights of all outgoing edges of this node to zero, as if the node has dropped out of the network. Dropconnect generalizes this idea: In a Dropconnect layer, every incoming connection to a node is dropped with some probability p \autocite{wan2013regularization}. 
+\paragraph*{ReLU/MaxPool}
+
+\paragraph*{Dropconnect \& ReLU/MaxPool}
+Dropconnect is bettter with Relu\\
+\begin{tabular}[h]{l | l l l l l l l l}
+Epoch & \multicolumn{2}{c}{Stock Model} & \multicolumn{2}{c}{Dropconnect} &
+\multicolumn{2}{c}{ReLU/MaxPool} & \multicolumn{2}{c}{Dropconnect \& ReLU/MaxPool} \\
+   &  Train & Test & Train & Test & Train & Test & Train & Test  \\
+\hline
+   1 &  96.66& 98.79 & 95.56 &98.62&   95.78& 98.3&94.58 &98.29\\  
+   2 &  98.99& 99.14 &98.77&99.02& 98.71&98.91&98.33 & 98.54\\
+   3 &  99.27& 99.31&99.12&99.18 & 99.07& 99.09& 98.81 & 99.18\\
+    4&  99.49& 99.24 &99.32&99.29& 99.34&98.88&\\
+    
+\end{tabular}
 \end{document}
 
 %%% Local Variables:
