@@ -201,7 +201,7 @@ function train()
    end
 
    -- save/log current net
-   local filename = paths.concat(opt.save, epoch .. '_relu_maxpool.t7b')
+   local filename = paths.concat(opt.save, epoch .. '_relu_maxpool_dropconnect.t7b')
    os.execute('mkdir -p ' .. sys.dirname(filename))
    print('==> saving model to '..filename)
    save = {mean = mean,
