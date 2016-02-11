@@ -43,21 +43,19 @@ In the opposite case $i=j$, the first term will not be zero:
 &= \beta \left((\Xo)^2_i - (\Xo)_i\right)   
 \end{align*}
 \section{Torch}
-MNIST is a public database of images of handwritten digits, commonly used for benchmarking of image recognition algorithms. In this assignment we apply several CNNs to the multiclass classification problem of assigning the correct label (0-9) to each image.
-
-In our experiments we started with the Stock Model as a baseline, and compared its performance to three altered versions:
+MNIST is a public database of images of handwritten digits, commonly used for benchmarking of image recognition algorithms. In this assignment we apply several CNNs to the multiclass classification problem of assigning the correct label (0-9) to each image. In our experiments we started with the given stock model as a baseline, and compared its performance to three altered versions:
 \paragraph*{Dropconnect}
-In this ConvNet, we replaced penultimate fully-connected linear layer with a Dropconnect layer. Dropconnect is a generalization of the widely used Dropout regularization technique proposed in \autocite{wan2013regularization}. It is used in the current best-performing MNIST ConvNet \autocite{wan2013regularization}. In a dropout layer, the output of each node is set to zero with some probability p \autocite{srivastava2014dropout}. This is equivalent to temporarily setting the weights of all outgoing edges of this node to zero, as if the node has dropped out of the network. Dropconnect generalizes this idea: In a Dropconnect layer, every incoming connection to a node is dropped with some probability p \autocite{wan2013regularization}. 
+In this ConvNet, we replaced penultimate fully-connected linear layer with a Dropconnect layer. Dropconnect is a generalization of the widely used Dropout regularization technique proposed by Geoffry Hinton. It is used in the current best-performing MNIST ConvNet \autocite{wan2013regularization}. In a dropout layer, the output of each node is set to zero with some probability p. \autocite{srivastava2014dropout}. This is equivalent to temporarily setting the weights of all outgoing edges of this node to zero, as if the node has dropped out of the network. Dropconnect generalizes this idea: In a Dropconnect layer, every incoming connection to a node is dropped with some probability p \autocite{wan2013regularization}. 
 \paragraph*{ReLU/MaxPool}
-In this ConvNet, we replaced the tanh and L2-pooling layers with ReLU and max-pooling respectively. Our intuition is that both ReLU and max-pooling are simpler than tanh and L2-pooling and thus this modification reduces the complexity of our model. Our motivation is that if we can achieve equal performance on the training set using a simpler model, then we may also achieve a better generalization error. Additionally, Rectified Linear Units (ReLU) are thought to outperform sigmoid and tanh non-linearities \autocite{glorot2011deep}. Max-pooling also appears in many convnets, e.g. \autocite{maxpooling}.
-\paragraph*{Dropconnect \& ReLU/MaxPool}
+In this ConvNet, we replaced the tanh and L2-pooling layers with ReLU and max-pooling respectively. Our intuition is that both ReLU and max-pooling are simpler than tanh and L2-pooling and thus this modification reduces the complexity of our model. Our motivation is that if we can achieve equal performance on the training set using a simpler model, then we may also achieve a better generalization error. Additionally, Rectified Linear Units (ReLU) are thought to outperform sigmoid and tanh non-linearities \autocite{glorot2011deep}. Max-pooling is also becoming more popular, e.g. \autocite{maxpooling}.
+\paragraph*{Dropconnect/ReLU/MaxPool}
 In our final model, we applied both the modifications discussed above.\\
 \subsection{Results \& Conclusions}
 \begin{table}[h]
   \centering
 \begin{tabular}[h]{l | l l l l l l l l}
 \textbf{Epoch} & \multicolumn{2}{c}{\textbf{Stock Model}} & \multicolumn{2}{c}{\textbf{Dropconnect}} &
-\multicolumn{2}{c}{\textbf{ReLU/MaxPool}} & \multicolumn{2}{c}{\textbf{Dropconnect \& ReLU/MaxPool}} \\
+\multicolumn{2}{c}{\textbf{ReLU/MaxPool}} & \multicolumn{2}{c}{\textbf{Dropconnect/ReLU/MaxPool}} \\
    &  Train & Test & Train & Test & Train & Test & Train & Test  \\
 \hline
    1 &  96.66 & 98.79 & 95.56 & 98.62 & 95.78 & 98.3  & 94.58 & 98.29\\  
@@ -68,6 +66,8 @@ In our final model, we applied both the modifications discussed above.\\
   \caption{Comparison of the Train \& Test Error of different ConvNets over the course of the first four training epochs}
   \label{tab:conv}
 \end{table}
+
+From the results in \autoref{tab:conv}, it is not clear to us which of these is the best. However we only trained the models for a small number of epochs and so perhaps greater differences would be apparent after more training epochs. Given that the base model delivers 99\%+ accuracy on both test and training set after only a few epochs and that the state of the art \autocite{wan2013regularization} achieves ~99.8\% accuracy after more than 100 epochs, that seems quite likely. For instance the Stock model and the ReLU/MaxPool convnets are not regularized whereas Dropconnect acts as regularization in our other models. Regularization should let us maintain a low generalization error even after many epochs, whereas the unregularized networks may begin to overfit.
 
 \printbibliography
 \end{document}

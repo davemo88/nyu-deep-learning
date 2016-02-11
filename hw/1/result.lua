@@ -6,7 +6,6 @@
 require 'torch'
 require 'xlua' -- progress bars
 require 'nn' -- required to load model
-require 'Dropconnect' -- required to load model
 
 -- parse command line arguments
 if not opt then
@@ -16,7 +15,7 @@ if not opt then
    cmd:text('MNIST Dataset Preprocessing')
    cmd:text()
    cmd:text('Options:')
-   cmd:option('-size', 'small', 'how many samples do we load: small | full')
+   cmd:option('-size', 'full', 'how many samples do we load: small | full')
    cmd:text()
    opt = cmd:parse(arg or {})
 end
@@ -29,6 +28,8 @@ elseif opt.size == 'small' then
    print '==> using reduced training data, for fast experiments'
    tesize = 1000
 end
+
+-----------------
 
 print '==> downloading dataset'
 
@@ -43,14 +44,21 @@ if not paths.filep(test_file) then
    os.execute('tar xvf ' .. paths.basename(tar))
 end
 
-print '==> downloading Dropconnect code'
+-----------------
 
+print '==> downloading Dropconnect code'
+-- we did not write the Dropconnect code
 dropconnect_code = 'Dropconnect.lua'
 
 if not paths.filep(dropconnect_code) then
--- go grab the model file if we don't already have it
+-- go grab the dropconnect code if we don't already have it
     os.execute('wget ' .. 'http://cs.nyu.edu/~dk2353/deeplearning/hw/1/' .. dropconnect_code)
 end
+
+-- need to do this after downloading the code
+require 'Dropconnect' -- required to load model
+
+-----------------
 
 print '==> downloading saved model'
 
@@ -61,7 +69,10 @@ if not paths.filep(model_file) then
     os.execute('wget ' .. 'http://cs.nyu.edu/~dk2353/deeplearning/hw/1/' .. model_file)
 end
 
+-- this is a table with our model and training mean and std
 saved = torch.load(model_file)
+
+-----------------
 
 print '==> normalize test data using training mean and std'
 
@@ -90,7 +101,7 @@ m:evaluate()
 
 -- function to get the index of maximum value
 -- i.e. the class with the highest probability
--- adapted from http://www.lua.org/pil/5.1.html
+-- from http://www.lua.org/pil/5.1.html
 function maximum (a)
     local mi = 1          -- maximum index
     local m = a[mi]       -- maximum value
@@ -109,7 +120,7 @@ f:write('Id,Prediction\n')
 
 print('==> testing on test set:')
 for t = 1,testData:size() do
-    -- disp progress
+    -- display progress
     xlua.progress(t, testData:size())
     -- get new sample
     -- cpa only so don't need to worry about input:cuda()
@@ -118,7 +129,7 @@ for t = 1,testData:size() do
 
     -- test sample
     local pred = m:forward(input)
--- get the id of the class with the highest probability
+    -- get the id of the class with the highest probability
     prob, pred_class = maximum(torch.totable(pred))
     f:write(t .. ',' .. pred_class .. '\n')
 end
