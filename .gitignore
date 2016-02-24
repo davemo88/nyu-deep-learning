@@ -10,6 +10,7 @@
 *.el
 *.pdf
 *.t7b
+predictions.csv
 hw/*/materials/*
 hw/*/results/
 auto/
