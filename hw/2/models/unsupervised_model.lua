@@ -47,26 +47,31 @@ vgg:add(maxpool5)
 -- in the what-where autoencoders paper
 -- could be this: vgg:add(nn.View(512*3*3))
 
-vgg:add(MaxUnpooling(maxpool5))
+unpool5 = MaxUnpooling(maxpool5)
+vgg:add(unpool5)
 ConvBNReLU(512,512)
 ConvBNReLU(512,512):add(nn.Dropout(0.4))
 ConvBNReLU(512,512):add(nn.Dropout(0.4))
 
-vgg:add(MaxUnpooling(maxpool4))
+unpool4 = MaxUnpooling(maxpool4)
+vgg:add(unpool4)
 ConvBNReLU(512,512)
 ConvBNReLU(512,512):add(nn.Dropout(0.4))
 ConvBNReLU(512,256):add(nn.Dropout(0.4))
 
-vgg:add(MaxUnpooling(maxpool3))
+unpool3 = MaxUnpooling(maxpool3)
+vgg:add(unpool3)
 ConvBNReLU(256,256)
 ConvBNReLU(256,256):add(nn.Dropout(0.4))
 ConvBNReLU(256,128):add(nn.Dropout(0.4))
 
-vgg:add(MaxUnpooling(maxpool2))
+unpool2 = MaxUnpooling(maxpool2)
+vgg:add(unpool2)
 ConvBNReLU(128,128)
 ConvBNReLU(128,64):add(nn.Dropout(0.4))
 
-vgg:add(MaxUnpooling(maxpool1))
+unpool1 = MaxUnpooling(maxpool1)
+vgg:add(unpool1)
 ConvBNReLU(64,64)
 ConvBNReLU(64,3):add(nn.Dropout(0.4))
 
@@ -89,4 +94,4 @@ MSRinit(vgg)
 -- should get 16x10 tensor
 --print(#vgg:cuda():forward(torch.CudaTensor(16,3,32,32)))
 
-return vgg
+-- return vgg

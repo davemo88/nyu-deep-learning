@@ -21,12 +21,11 @@ function parseDataLabel(d, numSamples, numChannels, height, width)
    return t, l
 end
 
-
 local Provider = torch.class 'Provider'
 
 function Provider:__init(full)
   local trsize = 4000
-  local valsize = 1000  -- Use the validation here as the valing set
+  local unlabeled_size = 100000
   local channel = 3
   local height = 96
   local width = 96
@@ -42,15 +41,12 @@ function Provider:__init(full)
      }
 
      os.execute('wget ' .. www.train .. '; '.. 'mv train.t7b stl-10/train.t7b')
-     os.execute('wget ' .. www.val .. '; '.. 'mv val.t7b stl-10/val.t7b')
-     os.execute('wget ' .. www.test .. '; '.. 'mv test.t7b stl-10/test.t7b')
      os.execute('wget ' .. www.extra .. '; '.. 'mv extra.t7b stl-10/extra.t7b')
   end
 
   local raw_train = torch.load('stl-10/train.t7b')
-  local raw_val = torch.load('stl-10/val.t7b')
+  local raw_unlabeled = torch.load('stl-10/extra.t7b')
 
-  -- load and parse dataset
   self.trainData = {
      data = torch.Tensor(),
      labels = torch.Tensor(),
@@ -58,21 +54,15 @@ function Provider:__init(full)
   }
   self.trainData.data, self.trainData.labels = parseDataLabel(raw_train.data,
                                                    trsize, channel, height, width)
-  local trainData = self.trainData
-  self.valData = {
-     data = torch.Tensor(),
-     labels = torch.Tensor(),
-     size = function() return valsize end
+
+  self.trainData = {
+    data = self.trainData.data .. raw_unlabeled.data,
+    size = function() return trsize + unlabeled_size end
   }
-  self.valData.data, self.valData.labels = parseDataLabel(raw_val.data,
-                                                 valsize, channel, height, width)
-  local valData = self.valData
 
   -- convert from ByteTensor to Float
   self.trainData.data = self.trainData.data:float()
   self.trainData.labels = self.trainData.labels:float()
-  self.valData.data = self.valData.data:float()
-  self.valData.labels = self.valData.labels:float()
   collectgarbage()
 end
 
@@ -81,7 +71,6 @@ function Provider:normalize()
   -- preprocess/normalize train/val sets
   --
   local trainData = self.trainData
-  local valData = self.valData
 
   print '<trainer> preprocessing data (color space + normalization)'
   collectgarbage()
@@ -113,20 +102,4 @@ function Provider:normalize()
   trainData.mean_v = mean_v
   trainData.std_v = std_v
 
-  -- preprocess valSet
-  for i = 1,valData:size() do
-    xlua.progress(i, valData:size())
-     -- rgb -> yuv
-     local rgb = valData.data[i]
-     local yuv = image.rgb2yuv(rgb)
-     -- normalize y locally:
-     yuv[{1}] = normalization(yuv[{{1}}])
-     valData.data[i] = yuv
-  end
-  -- normalize u globally:
-  valData.data:select(2,2):add(-mean_u)
-  valData.data:select(2,2):div(std_u)
-  -- normalize v globally:
-  valData.data:select(2,3):add(-mean_v)
-  valData.data:select(2,3):div(std_v)
 end
