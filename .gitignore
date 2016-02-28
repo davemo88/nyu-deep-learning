@@ -10,7 +10,7 @@
 *.el
 *.pdf
 *.t7b
-hw/*/materials/*
+hw/*/materials/
 hw/*/results/
 auto/
 sftp-config.json
