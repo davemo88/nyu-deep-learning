@@ -1,7 +1,7 @@
 require 'xlua'
 require 'optim'
 require 'cunn'
-dofile './provider.lua'
+dofile './unsupervised_provider.lua'
 dofile './models/unsupervised_model.lua'
 local c = require 'trepl.colorize'
 
@@ -13,7 +13,7 @@ opt = lapp[[
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
    --epoch_step               (default 25)          epoch step
-   --model                    (default vgg_bn_drop)     model name
+   --model                    (default unsupervised_model)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --backend                  (default nn)            backend
 ]]
@@ -58,9 +58,8 @@ print(model)
 -- need to get unlabeled data here
 print(c.blue '==>' ..' loading data')
 provider = torch.load 'provider.t7'
+provider:normalize()
 provider.trainData.data = provider.trainData.data:float()
-
---confusion = optim.ConfusionMatrix(10)
 
 print('Will save at '..opt.save)
 paths.mkdir(opt.save)

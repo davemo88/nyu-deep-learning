@@ -94,4 +94,4 @@ MSRinit(vgg)
 -- should get 16x10 tensor
 --print(#vgg:cuda():forward(torch.CudaTensor(16,3,32,32)))
 
--- return vgg
+return vgg

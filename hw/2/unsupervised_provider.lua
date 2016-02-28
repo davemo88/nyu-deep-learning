@@ -55,10 +55,12 @@ function Provider:__init(full)
   self.trainData.data, self.trainData.labels = parseDataLabel(raw_train.data,
                                                    trsize, channel, height, width)
 
-  self.trainData = {
-    data = self.trainData.data .. raw_unlabeled.data,
-    size = function() return trsize + unlabeled_size end
-  }
+
+  -- print(type(self.trainData.data), type(raw_unlabeled.data))
+  -- self.trainData = {
+  --   data = torch.cat(self.trainData.data, torch.Tensor(raw_unlabeled.data)),--self.trainData.data .. raw_unlabeled.data,
+  --   size = function() return trsize + unlabeled_size end
+  -- }
 
   -- convert from ByteTensor to Float
   self.trainData.data = self.trainData.data:float()
