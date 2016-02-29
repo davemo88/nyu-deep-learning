@@ -7,7 +7,7 @@ local c = require 'trepl.colorize'
 
 opt = lapp[[
    -s,--save                  (default "logs")      subdirectory to save logs
-   -b,--batchSize             (default 64)          batch size
+   -b,--batchSize             (default 32)          batch size
    -r,--learningRate          (default 1)        learning rate
    --learningRateDecay        (default 1e-7)      learning rate decay
    --weightDecay              (default 0.0005)      weightDecay
@@ -54,11 +54,9 @@ if opt.backend == 'cudnn' then
 end
 print(model)
 
-
 -- need to get unlabeled data here
 print(c.blue '==>' ..' loading data')
 provider = torch.load 'provider.t7'
-provider:normalize()
 provider.trainData.data = provider.trainData.data:float()
 
 print('Will save at '..opt.save)
@@ -93,7 +91,7 @@ function train()
   
   print(c.blue '==>'.." online epoch # " .. epoch .. ' [batchSize = ' .. opt.batchSize .. ']')
 
-  local targets = torch.CudaTensor(opt.batchSize)
+  -- local targets = torch.CudaTensor(opt.batchSize)
   local indices = torch.randperm(provider.trainData.data:size(1)):long():split(opt.batchSize)
   -- remove last element so that all the batches have equal size
   indices[#indices] = nil
@@ -102,18 +100,36 @@ function train()
   for t,v in ipairs(indices) do
     xlua.progress(t, #indices)
 
--- need to get 
+-- need to get unlabeled data
     local inputs = provider.trainData.data:index(1,v)
+    local targets = inputs:clone():cuda()
 
     local feval = function(x)
       if x ~= parameters then parameters:copy(x) end
       gradParameters:zero()
-      
       local outputs = model:forward(inputs)
-      local f = criterion:forward()
-      local f = criterion:forward(outputs, targets)
-      local df_do = criterion:backward(outputs, targets)
-      model:backward(inputs, df_do)
+      -- print(type(targets:cuda()), type(maxpool2.output:cuda()), type(decode_2.output:cuda()))
+      crit_inputs = {targets, 
+                     maxpool1.output,
+                     maxpool2.output,
+                     maxpool3.output,
+                     maxpool4.output}
+
+      crit_targets = {targets,
+                      decode_2.output,
+                      decode_3.output,
+                      decode_4.output,
+                      decode_5.output}
+
+      local f = criterion:forward(crit_inputs, crit_targets)
+      local df_do = criterion:backward(crit_inputs, crit_targets)
+      -- local f = criterion:forward(outputs, targets)
+      -- local df_do = criterion:backward(outputs, targets)]
+      model:backward(inputs, df_do[1])
+      decode_2:backward(maxpool1.output, df_do[2])
+      decode_3:backward(maxpool2.output, df_do[3])
+      decode_4:backward(maxpool3.output, df_do[4])
+      decode_5:backward(maxpool4.output, df_do[5])
 
       return f,gradParameters
     end

@@ -52,28 +52,33 @@ vgg:add(unpool5)
 ConvBNReLU(512,512)
 ConvBNReLU(512,512):add(nn.Dropout(0.4))
 ConvBNReLU(512,512):add(nn.Dropout(0.4))
+decode_5 = vgg:get(vgg:size())
 
 unpool4 = MaxUnpooling(maxpool4)
 vgg:add(unpool4)
 ConvBNReLU(512,512)
 ConvBNReLU(512,512):add(nn.Dropout(0.4))
 ConvBNReLU(512,256):add(nn.Dropout(0.4))
+decode_4 = vgg:get(vgg:size())
 
 unpool3 = MaxUnpooling(maxpool3)
 vgg:add(unpool3)
 ConvBNReLU(256,256)
 ConvBNReLU(256,256):add(nn.Dropout(0.4))
 ConvBNReLU(256,128):add(nn.Dropout(0.4))
+decode_3 = vgg:get(vgg:size())
 
 unpool2 = MaxUnpooling(maxpool2)
 vgg:add(unpool2)
 ConvBNReLU(128,128)
 ConvBNReLU(128,64):add(nn.Dropout(0.4))
+decode_2 = vgg:get(vgg:size())
 
 unpool1 = MaxUnpooling(maxpool1)
 vgg:add(unpool1)
 ConvBNReLU(64,64)
 ConvBNReLU(64,3):add(nn.Dropout(0.4))
+decode_1 = vgg:get(vgg:size())
 
 -- initialization from MSR
 local function MSRinit(net)
