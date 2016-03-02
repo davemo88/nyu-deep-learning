@@ -136,8 +136,14 @@ function train()
     optim.sgd(feval, parameters, optimState)
   end
 
+  if epoch % 10 == 0 then 
+    torch.save('trained/swwae_'.. epoch .. '.t7b', model) 
+  else
+    torch.save('trained/swwae_'.. epoch .. '.t7b', model)
+  end
+
   epoch = epoch + 1
-end
+  end
 
 for i=1,opt.max_epoch do
   train()

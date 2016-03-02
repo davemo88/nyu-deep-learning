@@ -25,7 +25,7 @@ local Provider = torch.class 'Provider'
 
 function Provider:__init(full)
   local trsize = 4000
-  local unlabeled_size = 100000
+  local exsize = 100000
   local channel = 3
   local height = 96
   local width = 96
@@ -45,7 +45,7 @@ function Provider:__init(full)
   end
 
   local raw_train = torch.load('stl-10/train.t7b')
-  local raw_unlabeled = torch.load('stl-10/extra.t7b')
+  local raw_extra = torch.load('stl-10/extra.t7b')
 
   self.trainData = {
      data = torch.Tensor(),
@@ -55,7 +55,7 @@ function Provider:__init(full)
   self.trainData.data, self.trainData.labels = parseDataLabel(raw_train.data,
                                                    trsize, channel, height, width)
 
-  -- self.trainData = {}
+  extra_data = torch.ByteTensor(exsize, channel, height, width)
   -- print(type(self.trainData.data), type(raw_unlabeled.data))
   -- self.trainData = {
   --   data = torch.cat(self.trainData.data, torch.Tensor(raw_unlabeled.data)),--self.trainData.data .. raw_unlabeled.data,
