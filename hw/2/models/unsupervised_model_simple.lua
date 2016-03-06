@@ -6,10 +6,10 @@ local model = nn.Sequential()
 local function Encoder(nInputPlane, nOutputPlane)
   encoder = nn.Sequential()
   encoder:add(nn.SpatialConvolution(nInputPlane, nOutputPlane, 3,3, 1,1, 1,1))
-  encoder:add(nn.ReLU())
   pooling = nn.SpatialMaxPooling(2,2,2,2)
   encoder:add(pooling)
   encoder:add(nn.SpatialBatchNormalization(nOutputPlane, 1e-3))
+  encoder:add(nn.ReLU())
   encoder:add(nn.Dropout(0.5))
   return pooling, encoder
 end
