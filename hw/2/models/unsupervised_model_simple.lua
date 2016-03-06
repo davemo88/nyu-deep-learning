@@ -3,7 +3,7 @@ require 'nn'
 local model = nn.Sequential()
 
 -- building block
-local function Encoder(nInputPlane, nOutputPlane)
+function Encoder(nInputPlane, nOutputPlane)
   encoder = nn.Sequential()
   encoder:add(nn.SpatialConvolution(nInputPlane, nOutputPlane, 3,3, 1,1, 1,1))
   pooling = nn.SpatialMaxPooling(2,2,2,2)
@@ -14,7 +14,7 @@ local function Encoder(nInputPlane, nOutputPlane)
   return pooling, encoder
 end
 
-local function Decoder(nInputPlane, nOutputPlane, pooling)
+function Decoder(nInputPlane, nOutputPlane, pooling)
   decoder = nn.Sequential()
   decoder:add(nn.SpatialMaxUnpooling(pooling))
   decoder:add(nn.SpatialConvolution(nInputPlane,nOutputPlane, 3, 3, 1, 1, 1, 1))
@@ -28,8 +28,8 @@ end
 pooling, encoder =  Encoder(3,64)
 model:add(encoder)
 decoder = Decoder(64,3, pooling)
-decoder:delete(4)
-decoder:delete(3)
+decoder:remove(4)
+decoder:remove(3)
 model:add(decoder)
 
 -- initialization from MSR
