@@ -27,7 +27,7 @@ local Provider = torch.class 'Provider'
 function Provider:__init(full)
   local train_size = 4000
   local extra_size = 100000
-  local batch_size = 4000
+  local clump_size = 4000
   local channel = 3
   local height = 96
   local width = 96
@@ -49,52 +49,52 @@ function Provider:__init(full)
   local raw_train = torch.load('stl-10/train.t7b')
   local raw_extra = torch.load('stl-10/extra.t7b')
 
-  self.batches = {}
+  self.clumps = {}
 
   records = raw_extra.data[1]
 
-  num_batches = extra_size / batch_size
+  num_clumps = extra_size / clump_size
 
-  for i=1, num_batches do
+  for i=1, num_clumps do
 
-    print('batch_num: ' .. i)
+    print('clump_num: ' .. i)
 
-    self.batches[i] = {
-      data = torch.ByteTensor(batch_size, channel, height, width),
-      size = function() return batch_size end
+    self.clumps[i] = {
+      data = torch.ByteTensor(clump_size, channel, height, width),
+      size = function() return clump_size end
     }
 
-    start_idx = (i-1) * batch_size + 1
-    end_idx = start_idx + batch_size - 1
+    start_idx = (i-1) * clump_size + 1
+    end_idx = start_idx + clump_size - 1
 
     --print(start_idx, end_idx)
 
     for j = start_idx, end_idx do
 
-      batch_idx = (j % 4000) + 1
+      clump_idx = (j % 4000) + 1
 
-      self.batches[i].data[batch_idx]:copy(records[j])
+      self.clumps[i].data[clump_idx]:copy(records[j])
     end
 
-    self.batches[i].data = self.batches[i].data:float()
+    self.clumps[i].data = self.clumps[i].data:float()
     collectgarbage()
 
   end
 
--- get the labled examples as their own batch
-  train_batch = {
+-- get the labled examples as their own clump
+  train_clump = {
      data = torch.Tensor(),
      labels = torch.Tensor(),
      size = function() return train_size end
   }
-  train_batch.data, train_batch.labels = parseDataLabel(raw_train.data,
+  train_clump.data, train_clump.labels = parseDataLabel(raw_train.data,
                                                       train_size, channel, height, width)
 
 -- convert from ByteTensor to Float
-  train_batch.data = train_batch.data:float()
+  train_clump.data = train_clump.data:float()
   collectgarbage()
 
-  self.batches[num_batches+1] = train_batch
+  self.clumps[num_clumps+1] = train_clump
 
 end
 
@@ -102,7 +102,7 @@ function Provider:normalize()
   ----------------------------------------------------------------------
   -- preprocess/normalize train/val sets
   --
-  local batches = self.batches
+  local clumps = self.clumps
 
   print '<trainer> preprocessing data (color space + normalization)'
   collectgarbage()
@@ -114,12 +114,12 @@ function Provider:normalize()
   local mean_var_u = 0
   local mean_var_v = 0
 
-  local num_batches = table.getn(batches)
+  local num_clumps = table.getn(clumps)
 
-  for i=1, num_batches do
-    b = batches[i]
-    print('==> batch ' .. i)
-    -- preprocess batches
+  for i=1, num_clumps do
+    b = clumps[i]
+    print('==> clump ' .. i)
+    -- preprocess clumps
     local normalization = nn.SpatialContrastiveNormalization(1, image.gaussian1D(7))
     print('==> normalize y locally:')
     for i = 1,b:size() do
@@ -133,13 +133,13 @@ function Provider:normalize()
        collectgarbage()
     end
     -- normalize u globally:
-    print('==> get batch u stats for global normalization')
+    print('==> get clump u stats for global normalization')
     b.mean_u = b.data:select(2,2):mean()
     b.var_u = b.data:select(2,2):var()
     mean_u = mean_u + b.mean_u
     var_u = var_u + b.var_u
 
-    print('==> get batch v stats for global normalization')
+    print('==> get clump v stats for global normalization')
     b.mean_v = b.data:select(2,3):mean()
     b.var_v = b.data:select(2,3):var()
     mean_v = mean_v + b.mean_v
@@ -148,23 +148,23 @@ function Provider:normalize()
   end
 
   print('==> compute global mean and var for u')
-  mean_u = mean_u / num_batches
-  for i=1, num_batches do
-    mean_var_u = mean_var_u + (batches[i].mean_u - mean_u)^2
+  mean_u = mean_u / num_clumps
+  for i=1, num_clumps do
+    mean_var_u = mean_var_u + (clumps[i].mean_u - mean_u)^2
   end
-  var_u = (var_u + mean_var_u) / num_batches
+  var_u = (var_u + mean_var_u) / num_clumps
 
   print('==> compute global mean and var for v')
-  mean_v = mean_v / num_batches
-  for i=1, num_batches do
-    mean_var_v = mean_var_v + (batches[i].mean_v - mean_v)^2
+  mean_v = mean_v / num_clumps
+  for i=1, num_clumps do
+    mean_var_v = mean_var_v + (clumps[i].mean_v - mean_v)^2
   end
-  var_v = (var_v + mean_var_v) / num_batches
+  var_v = (var_v + mean_var_v) / num_clumps
 
-  print('==> normalize batches globally')
-  for i=1, num_batches do
-    b = batches[i]
-    print('==> batch ' .. i)
+  print('==> normalize clumps globally')
+  for i=1, num_clumps do
+    b = clumps[i]
+    print('==> clump ' .. i)
     print('==> normalize u globally')
     b.data:select(2,2):add(-mean_u)
     b.data:select(2,2):div(math.sqrt(var_u))
@@ -175,14 +175,14 @@ function Provider:normalize()
 
 end
 
-function Provider:save_batches()
+function Provider:save_clumps()
 
-  local batches = self.batches
+  local clumps = self.clumps
 
-  local num_batches = table.getn(batches)
+  local num_clumps = table.getn(clumps)
 
-  for i=1, num_batches do
-    print('==> saving batch ' .. i)
-    torch.save('batches/' .. i .. '.t7b', batches[i])
+  for i=1, num_clumps do
+    print('==> saving clump ' .. i)
+    torch.save('clumps/' .. i .. '.t7b', clumps[i])
   end
 end
