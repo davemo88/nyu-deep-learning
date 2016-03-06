@@ -28,8 +28,8 @@ end
 pooling, encoder =  Encoder(3,64)
 model:add(encoder)
 decoder = Decoder(64,3, pooling)
-decoder:delete(4)
-decoder:delete(3)
+decoder:remove(4)
+decoder:remove(3)
 model:add(decoder)
 
 -- initialization from MSR
