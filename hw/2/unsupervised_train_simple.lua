@@ -69,11 +69,12 @@ function train()
   -- drop learning rate every "epoch_step" epochs
   if epoch % opt.epoch_step == 0 then optimState.learningRate = optimState.learningRate/2 end
   
-  print(c.blue '==>'.." online epoch # " .. epoch .. ' [batchSize = ' .. opt.batchSize .. ']')
+  print(c.blue '==>'.." online epoch # " .. epoch .. 
+    ' [batchSize = ' .. opt.batchSize .. 
+    ', clumps = ' .. opt.clumps .. ']')
 
   for i=1, opt.clumps do
     print(c.blue '==>' ..' loading clump ' .. i .. '/' .. opt.clumps)
-    print('clumps/' .. i .. '.t7b'  )
     clump = torch.load('clumps/' .. i .. '.t7b')
     clump.data = clump.data:float()
     local targets = torch.CudaTensor(opt.batchSize)
@@ -108,6 +109,8 @@ function train()
   end
   last_rec_err = this_rec_err
   epoch = epoch + 1
+-- why not?
+  collectgarbage()
 end
 
 
