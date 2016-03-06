@@ -10,14 +10,15 @@ local function Encoder(nInputPlane, nOutputPlane)
   pooling = nn.SpatialMaxPooling(2,2,2,2)
   encoder:add(pooling)
   encoder:add(nn.SpatialBatchNormalization(nOutputPlane, 1e-3))
+  encoder:add(nn.Dropout(0.5))
   return pooling, encoder
 end
 
 local function Decoder(nInputPlane, nOutputPlane, pooling)
   decoder = nn.Sequential()
   decoder:add(nn.SpatialMaxUnpooling(pooling))
-  decoder:add(nn.ReLU())
   decoder:add(nn.SpatialConvolution(nInputPlane,nOutputPlane, 3, 3, 1, 1, 1, 1))
+  decoder:add(nn.ReLU())
   decoder:add(nn.SpatialBatchNormalization(nOutputPlane, 1e-3))
   return decoder
 end
@@ -26,7 +27,10 @@ end
 
 pooling, encoder =  Encoder(3,64)
 model:add(encoder)
-model:add(Decoder(64,3, pooling))
+decoder = Decoder(64,3, pooling)
+decoder:delete(4)
+decoder:delete(3)
+model:add(decoder)
 
 -- initialization from MSR
 local function MSRinit(net)
