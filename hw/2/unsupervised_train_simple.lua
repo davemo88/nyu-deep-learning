@@ -1,7 +1,7 @@
 require 'xlua'
 require 'optim'
 require 'cunn'
-dofile './unsupervised_provider.lua'
+-- dofile './unsupervised_provider.lua'
 local c = require 'trepl.colorize'
 
 opt = lapp[[
@@ -15,6 +15,7 @@ opt = lapp[[
    --model                    (default unsupervised_model_simple)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --backend                  (default nn)            backend
+   --clumps                   (default 26)            number of training clumps
 ]]
 
 print(opt)
@@ -27,11 +28,6 @@ if opt.backend == 'cudnn' then
    cudnn.convert(model, cudnn)
 end
 print(model)
-
--- need to get unlabeled data here
-print(c.blue '==>' ..' loading data')
-provider = torch.load 'provider.t7'
-provider.trainData.data = provider.trainData.data:float()
 
 print('Will save at '..opt.save)
 paths.mkdir(opt.save)
@@ -62,47 +58,54 @@ function train()
   
   print(c.blue '==>'.." online epoch # " .. epoch .. ' [batchSize = ' .. opt.batchSize .. ']')
 
-  -- local targets = torch.CudaTensor(opt.batchSize)
-  local indices = torch.randperm(provider.trainData.data:size(1)):long():split(opt.batchSize)
-  -- remove last element so that all the batches have equal size
-  indices[#indices] = nil
+  for i=1, opt.clumps do
+    print(c.blue '==>' ..' loading clump ' .. i .. '/' .. opt.clumps)
+    print('clumps/' .. i .. '.t7b'  )
+    clump = torch.load('clumps/' .. i .. '.t7b')
+    clump.data = clump.data:float()
+    local targets = torch.CudaTensor(opt.batchSize)
+    local indices = torch.randperm(clump.data:size(1)):long():split(opt.batchSize)
+    -- remove last element so that all the batches have equal size
+    indices[#indices] = nil
 
-  local tic = torch.tic()
-  for t,v in ipairs(indices) do
-    xlua.progress(t, #indices)
+    local tic = torch.tic()
+    for t,v in ipairs(indices) do
+      xlua.progress(t, #indices)
 
--- need to get unlabeled data
-    local inputs = provider.trainData.data:index(1,v):cuda()
-    local targets = inputs:clone():cuda()
-
-
+  -- need to get unlabeled data
+      local inputs = clump.data:index(1,v):cuda()
+      local targets = inputs:clone():cuda()
 
 
-    local feval = function(x)
-      if x ~= parameters then parameters:copy(x) end
-      gradParameters:zero()
-      local outputs = model:forward(inputs)
-      -- print(type(targets:cuda()), type(maxpool2.output:cuda()), type(decode_2.output:cuda()))
-      --crit_inputs = {outputs, 
-      --                decode1.output
-      --               }
 
-      --crit_targets = {targets,
-      --                maxpool1.output
-      --               }
-      --local f = criterion:forward(crit_inputs, crit_targets)
-      --local df_do = criterion:backward(crit_inputs, crit_targets)
-      local f = criterion:forward(outputs, targets)
-      local df_do = criterion:backward(outputs, targets)
-      this_rec_err = this_rec_err + f
-      model:backward(inputs:cuda(), df_do)
-      --decode1:backward(maxpool1.output, df_do[2])
-      return f,gradParameters
+
+      local feval = function(x)
+        if x ~= parameters then parameters:copy(x) end
+        gradParameters:zero()
+        local outputs = model:forward(inputs)
+        -- print(type(targets:cuda()), type(maxpool2.output:cuda()), type(decode_2.output:cuda()))
+        --crit_inputs = {outputs, 
+        --                decode1.output
+        --               }
+
+        --crit_targets = {targets,
+        --                maxpool1.output
+        --               }
+        --local f = criterion:forward(crit_inputs, crit_targets)
+        --local df_do = criterion:backward(crit_inputs, crit_targets)
+        local f = criterion:forward(outputs, targets)
+        local df_do = criterion:backward(outputs, targets)
+        this_rec_err = this_rec_err + f
+        model:backward(inputs:cuda(), df_do)
+        --decode1:backward(maxpool1.output, df_do[2])
+        return f,gradParameters
+      end
+      optim.sgd(feval, parameters, optimState)
     end
-    optim.sgd(feval, parameters, optimState)
   end
+
   if epoch % 10 == 0 and epoch > 1 then 
-    torch.save('trained/swwae_simple'.. epoch .. '.t7b', model) 
+    torch.save('trained/cae_simple'.. epoch .. '.t7b', model) 
   end
   if epoch >1 then
     print("Improvement %: " .. ((100*(last_rec_err-this_rec_err))/last_rec_err))
