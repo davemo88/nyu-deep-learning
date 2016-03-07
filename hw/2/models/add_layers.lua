@@ -5,8 +5,7 @@ require('batchflip.lua')
 
 dofile('models/unsupervised_model_simple.lua')
 
-file = 'trained/cae_simple10.t7b'
-num_old = 1
+file = 'trained/cae_simple6.t7b'
 depth  = 0
 mod = torch.load(file)
 local m = mod
@@ -24,7 +23,7 @@ pooling, encoder = Encoder(nInputPlanes,nOutputPlanes)
 new_layer:add(encoder)
 new_layer:add(Decoder(nOutputPlanes,nInputPlanes, pooling))
 current = mod
-for i = 1,num_old-1 do
+for i = 1,depth-1 do
 	current = current:get(2)
 end	
 current:insert(new_layer, 2)

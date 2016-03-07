@@ -1,7 +1,8 @@
 require 'xlua'
 require 'optim'
 require 'cunn'
-dofile './provider.lua'
+require 'image'
+--dofile './supervised_provider.lua'
 local c = require 'trepl.colorize'
 
 opt = lapp[[
@@ -12,7 +13,7 @@ opt = lapp[[
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
    --epoch_step               (default 25)          epoch step
-   --model                    (default vgg_bn_drop)     model name
+   --model                    (default get_encoder)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --backend                  (default nn)            backend
 ]]
@@ -38,13 +39,77 @@ do -- data augmentation module
     self.output:set(input)
     return self.output
   end
+
+  local Translate, parent = torch.class('nn.Translate', 'nn.Module')
+  
+  function Translate:__init()
+    parent.__init(self)
+    self.train = true
+  end
+
+  function Translate:updateOutput(input)
+    if self.train then
+      for i=1,input:size(1) do
+        xTrans = torch.random(-4,4)
+        yTrans = torch.random(-4,4)
+        image.translate(input[i], xTrans, yTrans, input[i]) 
+      end
+    end
+    self.output:set(input)
+    return self.output
+  end
+
+
+  local Rotate, parent = torch.class('nn.Rotate', 'nn.Module')
+
+  function Rotate:__init()
+    parent.__init(self)
+    self.train = true
+  end
+
+  function Rotate:updateOutput(input)
+    if self.train then
+      for i=1,input:size(1) do
+        deg = torch.uniform(-15,15)
+        image.rotate(input[i], deg, input[i]) 
+      end
+    end
+    self.output:set(input)
+    return self.output
+  end
+
+  local GaussianNoise, parent = torch.class('nn.GaussianNoise', 'nn.Module')
+
+  function GaussianNoise:__init()
+    parent.__init(self)
+    self.train = true
+  end
+
+  function GaussianNoise:updateOutput(input)
+    if self.train then
+      for i=1,input:size(1) do
+        uNoise = torch.normal(0,0.1)
+        vNoise = torch.normal(0,0.1)
+        input[i][2] = input[i][2] + uNoise
+        input[i][3] = input[i][3] + vNoise 
+      end
+    end
+    self.output:set(input)
+    return self.output
+  end
+
+
+
 end
 
 print(c.blue '==>' ..' configuring model')
 local model = nn.Sequential()
 model:add(nn.BatchFlip():float())
+model:add(nn.Rotate():float())
+model:add(nn.Translate():float())
+model:add(nn.GaussianNoise():float())
 model:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
-model:add(dofile('models/'..opt.model..'.lua'):cuda())
+--model:add(dofile(opt.model..'.lua'):cuda())
 model:get(2).updateGradInput = function(input) return end
 
 if opt.backend == 'cudnn' then

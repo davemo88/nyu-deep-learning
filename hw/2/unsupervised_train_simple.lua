@@ -22,7 +22,7 @@ print(opt)
 
 print(c.blue '==>' ..' configuring model')
 local model = dofile('models/'..opt.model..'.lua'):cuda()
-
+--local model = torch.load('trained/cae_simple3.t7b')
 -- Calculate Number of nested Autoencoders
 depth  = 0
 local m = model
@@ -69,12 +69,11 @@ function train()
   -- drop learning rate every "epoch_step" epochs
   if epoch % opt.epoch_step == 0 then optimState.learningRate = optimState.learningRate/2 end
   
-  print(c.blue '==>'.." online epoch # " .. epoch .. 
-    ' [batchSize = ' .. opt.batchSize .. 
-    ', clumps = ' .. opt.clumps .. ']')
+  print(c.blue '==>'.." online epoch # " .. epoch .. ' [batchSize = ' .. opt.batchSize .. ']')
 
   for i=1, opt.clumps do
     print(c.blue '==>' ..' loading clump ' .. i .. '/' .. opt.clumps)
+    print('clumps/' .. i .. '.t7b'  )
     clump = torch.load('clumps/' .. i .. '.t7b')
     clump.data = clump.data:float()
     local targets = torch.CudaTensor(opt.batchSize)
@@ -101,16 +100,14 @@ function train()
     end
   end
 
-  if epoch % 3 == 0 and epoch > 1 then 
-    torch.save('trained/cae_simple'.. epoch .. '.t7b', model) 
+  if epoch % 2 == 0 and epoch > 1 then 
+    torch.save('trained/cae_3L_'.. epoch .. 'E.t7b', model) 
   end
   if epoch >1 then
     print("Improvement %: " .. ((100*(last_rec_err-this_rec_err))/last_rec_err))
   end
   last_rec_err = this_rec_err
   epoch = epoch + 1
--- why not?
-  collectgarbage()
 end
 
 
