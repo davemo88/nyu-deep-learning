@@ -1,3 +1,5 @@
+require 'nn'
+
 do -- data augmentation module
   local BatchFlip,parent = torch.class('nn.BatchFlip', 'nn.Module')
 
