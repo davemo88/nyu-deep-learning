@@ -2,7 +2,8 @@ require 'xlua'
 require 'optim'
 require 'cunn'
 require 'image'
---dofile './supervised_provider.lua'
+
+dofile './supervised_provider.lua'
 local c = require 'trepl.colorize'
 
 opt = lapp[[
@@ -20,15 +21,52 @@ opt = lapp[[
 
 print(opt)
 
-do -- data augmentation module
-  local BatchFlip,parent = torch.class('nn.BatchFlip', 'nn.Module')
 
-  function BatchFlip:__init()
+-- do -- data augmentation module
+--   local Augmentation,parent = torch.class('nn.Augmentation', 'nn.Module')
+
+--   function Augmentation:__init()
+--     parent.__init(self)
+--     self.train = true
+--   end
+
+--   function Augmentation:updateOutput(input)
+--     if self.train then
+--       local bs = input:size(1)
+--       print(self.output:size())
+--       print(input:size())
+--       self.output = torch.FloatTensor(input:size()):copy(input)
+--       local flip_mask = torch.randperm(bs):le(bs/2)
+--       for i=1,bs do
+--         -- Flip
+--         if flip_mask[i] == 1 then image.hflip(self.output[i], self.output[i]) end
+--         -- Translate
+--         xTrans = torch.random(-6,6)
+--         yTrans = torch.random(-6,6)
+--         image.translate(self.output[i], xTrans, yTrans, self.output[i]) 
+--         -- Rotate
+--         deg = torch.uniform(-0.2,0.2)
+--         image.rotate(self.output[i], deg, self.output[i]) 
+--         -- Add Gaussian Noise
+--         uNoise = torch.normal(0,0.25)
+--         vNoise = torch.normal(0,0.25)
+--         self.output[i][2] = self.output[i][2] + uNoise
+--         self.output[i][3] = self.output[i][3] + vNoise 
+--       end
+--     end
+--     return self.output
+--   end
+-- end
+
+do -- data augmentation module
+  local Augmentation,parent = torch.class('nn.Augmentation', 'nn.Module')
+
+  function Augmentation:__init()
     parent.__init(self)
     self.train = true
   end
 
-  function BatchFlip:updateOutput(input)
+  function Augmentation:updateOutput(input)
     if self.train then
       local bs = input:size(1)
       local flip_mask = torch.randperm(bs):le(bs/2)
@@ -39,83 +77,14 @@ do -- data augmentation module
     self.output:set(input)
     return self.output
   end
-
-  local Translate, parent = torch.class('nn.Translate', 'nn.Module')
-  
-  function Translate:__init()
-    parent.__init(self)
-    self.train = true
-  end
-
-  function Translate:updateOutput(input)
-    if self.train then
-      for i=1,input:size(1) do
-        xTrans = torch.random(-4,4)
-        yTrans = torch.random(-4,4)
-        image.translate(input[i], xTrans, yTrans, input[i]) 
-      end
-    end
-    self.output:set(input)
-    return self.output
-  end
-
-
-  local Rotate, parent = torch.class('nn.Rotate', 'nn.Module')
-
-  function Rotate:__init()
-    parent.__init(self)
-    self.train = true
-  end
-
-  function Rotate:updateOutput(input)
-    if self.train then
-      for i=1,input:size(1) do
-        deg = torch.uniform(-15,15)
-        image.rotate(input[i], deg, input[i]) 
-      end
-    end
-    self.output:set(input)
-    return self.output
-  end
-
-  local GaussianNoise, parent = torch.class('nn.GaussianNoise', 'nn.Module')
-
-  function GaussianNoise:__init()
-    parent.__init(self)
-    self.train = true
-  end
-
-  function GaussianNoise:updateOutput(input)
-    if self.train then
-      for i=1,input:size(1) do
-        uNoise = torch.normal(0,0.1)
-        vNoise = torch.normal(0,0.1)
-        input[i][2] = input[i][2] + uNoise
-        input[i][3] = input[i][3] + vNoise 
-      end
-    end
-    self.output:set(input)
-    return self.output
-  end
-
-
-
 end
 
 print(c.blue '==>' ..' configuring model')
 local model = nn.Sequential()
-model:add(nn.BatchFlip():float())
-model:add(nn.Rotate():float())
-model:add(nn.Translate():float())
-model:add(nn.GaussianNoise():float())
+model:add(nn.Augmentation():float())
 model:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
---model:add(dofile(opt.model..'.lua'):cuda())
+model:add(dofile('./get_encoder.lua'):cuda())
 model:get(2).updateGradInput = function(input) return end
-
-if opt.backend == 'cudnn' then
-   require 'cudnn'
-   cudnn.convert(model:get(3), cudnn)
-end
 
 print(model)
 
@@ -167,7 +136,8 @@ function train()
     xlua.progress(t, #indices)
 
     local inputs = provider.trainData.data:index(1,v)
-    targets:copy(provider.trainData.data:index(1,v))
+
+    targets:copy(provider.trainData.labels:index(1,v))
 
     local feval = function(x)
       if x ~= parameters then parameters:copy(x) end
