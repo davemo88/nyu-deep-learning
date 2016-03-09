@@ -2,31 +2,45 @@ require 'nn'
 require 'image'
 require 'optim'
 require 'cunn'
---dofile './batchflip.lua'
 num_layers = 2
 
-file = "trained/cae_simple10.t7b"
---augmentation = dofile('augmentation.lua')
-
+-- Load  CAE
+file = "trained/cae_3L_16E.t7b"
 mod_old = torch.load(file)
 
-print(mod_old)
+
+
+-- determine number of stacked autoencoders
+depth  = 0
+m = mod_old
+while true do
+  depth = depth + 1
+  if (m:size() == 2) then
+    break 
+  end
+  m = m:get(2)
+end
+
+
 
 mod_new = nn.Sequential()
---mod_new:add(augmentation)
 
-print(mod_old:get(1))
+-- Data Augmentation Modules
+augmentation = dofile('augmentation.lua')
+mod_new:add(augmentation)
 
-mod_new:add(mod_old:get(1))
+-- Extract all encoder mdoules from old model
+for i=1,depth do
+	mod_new:add(mod_old:get(1))
+	mod_old = mod_old:get(2)
+end
 
-print(mod_new:get(1):get(5).output:size())
-
-s = mod_new:get(1):get(5).output:size()
-
+-- Put a linear view on top of the last Encoder
+s = mod_new:get(mod_new:size()).output:size()
 linear_s = s[2]*s[3]*s[4]
-
 mod_new:add(nn.View(linear_s))
 
+-- Add a Classifier
 classifier = nn.Sequential()
 classifier:add(nn.Dropout(0.5))
 classifier:add(nn.Linear(linear_s,512))
@@ -35,7 +49,4 @@ classifier:add(nn.ReLU(true))
 classifier:add(nn.Dropout(0.5))
 classifier:add(nn.Linear(512,10))
 mod_new:add(classifier)
-
-print(mod_new)
-
 return mod_new

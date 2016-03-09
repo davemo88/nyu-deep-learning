@@ -1,6 +1,8 @@
 require 'xlua'
 require 'optim'
 require 'cunn'
+require 'image'
+
 dofile './supervised_provider.lua'
 local c = require 'trepl.colorize'
 
@@ -12,22 +14,59 @@ opt = lapp[[
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
    --epoch_step               (default 25)          epoch step
-   --model                    (default cae_simple10)     model name
+   --model                    (default get_encoder)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --backend                  (default nn)            backend
 ]]
 
 print(opt)
 
-do -- data augmentation module
-  local BatchFlip,parent = torch.class('nn.BatchFlip', 'nn.Module')
 
-  function BatchFlip:__init()
+-- do -- data augmentation module
+--   local Augmentation,parent = torch.class('nn.Augmentation', 'nn.Module')
+
+--   function Augmentation:__init()
+--     parent.__init(self)
+--     self.train = true
+--   end
+
+--   function Augmentation:updateOutput(input)
+--     if self.train then
+--       local bs = input:size(1)
+--       print(self.output:size())
+--       print(input:size())
+--       self.output = torch.FloatTensor(input:size()):copy(input)
+--       local flip_mask = torch.randperm(bs):le(bs/2)
+--       for i=1,bs do
+--         -- Flip
+--         if flip_mask[i] == 1 then image.hflip(self.output[i], self.output[i]) end
+--         -- Translate
+--         xTrans = torch.random(-6,6)
+--         yTrans = torch.random(-6,6)
+--         image.translate(self.output[i], xTrans, yTrans, self.output[i]) 
+--         -- Rotate
+--         deg = torch.uniform(-0.2,0.2)
+--         image.rotate(self.output[i], deg, self.output[i]) 
+--         -- Add Gaussian Noise
+--         uNoise = torch.normal(0,0.25)
+--         vNoise = torch.normal(0,0.25)
+--         self.output[i][2] = self.output[i][2] + uNoise
+--         self.output[i][3] = self.output[i][3] + vNoise 
+--       end
+--     end
+--     return self.output
+--   end
+-- end
+
+do -- data augmentation module
+  local Augmentation,parent = torch.class('nn.Augmentation', 'nn.Module')
+
+  function Augmentation:__init()
     parent.__init(self)
     self.train = true
   end
 
-  function BatchFlip:updateOutput(input)
+  function Augmentation:updateOutput(input)
     if self.train then
       local bs = input:size(1)
       local flip_mask = torch.randperm(bs):le(bs/2)
@@ -42,15 +81,10 @@ end
 
 print(c.blue '==>' ..' configuring model')
 local model = nn.Sequential()
-model:add(nn.BatchFlip():float())
+model:add(nn.Augmentation():float())
 model:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
 model:add(dofile('./get_encoder.lua'):cuda())
 model:get(2).updateGradInput = function(input) return end
-
-if opt.backend == 'cudnn' then
-   require 'cudnn'
-   cudnn.convert(model:get(3), cudnn)
-end
 
 print(model)
 
@@ -102,6 +136,7 @@ function train()
     xlua.progress(t, #indices)
 
     local inputs = provider.trainData.data:index(1,v)
+
     targets:copy(provider.trainData.labels:index(1,v))
 
     local feval = function(x)
