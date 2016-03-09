@@ -12,10 +12,10 @@ opt = lapp[[
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
    --epoch_step               (default 3)          epoch step
-   --model                    (default add_layers)     model name
+   --model                    (default swwae_copy)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --backend                  (default nn)            backend
-   --clumps                   (default 26)            number of training clumps
+   --clumps                   (default 10)            number of training clumps
 ]]
 
 print(opt)

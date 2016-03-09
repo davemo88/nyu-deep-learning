@@ -5,7 +5,7 @@ require 'cunn'
 num_layers = 2
 
 -- Load  CAE
-file = "trained/cae_3L_16E.t7b"
+file = "trained/cae_3L_6E.t7b"
 mod_old = torch.load(file)
 
 
@@ -25,15 +25,14 @@ end
 
 mod_new = nn.Sequential()
 
--- Data Augmentation Modules
-augmentation = dofile('augmentation.lua')
-mod_new:add(augmentation)
 
 -- Extract all encoder mdoules from old model
 for i=1,depth do
 	mod_new:add(mod_old:get(1))
 	mod_old = mod_old:get(2)
 end
+
+print(mod_new)
 
 -- Put a linear view on top of the last Encoder
 s = mod_new:get(mod_new:size()).output:size()

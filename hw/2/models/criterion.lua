@@ -2,7 +2,6 @@
 function gradient(model, input,  depth, criterion )
   crit_inputs = {}
   crit_targets = {}
-  i = 1
   for i=1,depth do
     output = model.output
     crit_targets[i] = input
