@@ -17,6 +17,24 @@
 
 \subsection{Backprop through a DAG of modules}
 
+First, we refer to assignment 1 for the partial derivative of the sigmoid function $\sigma(\cdot)$ with respect to the input $x$:
+
+\begin{equation}
+	\frac{\partial \sigma(x)}{\partial x} = \frac{\partial}{\partial x}\frac{1}{1+\exp(x)} = \frac{\exp(-x)}{(1+\exp(-x))^2}
+\end{equation}
+
+\noindent Now consider $\frac{\partial E}{\partial x_1}$. First, we may note that the max and min layers in this network are irrelevant and so only the sigmoid activations and the sum are important to consider. Thus we have:
+
+\begin{equation}
+	\frac{\partial E}{\partial x_1} = \frac{\partial E}{\partial y} \frac{\partial y}{\partial x_1}= \frac{\partial E}{\partial y} \frac{\partial (\sigma(x_1) + \sigma(x_2))}{\partial x_1} = \frac{\partial E}{\partial y} \frac{\exp(-x_1)}{(1+\exp(-x_1))^2}
+\end{equation}
+
+\noindent The second term in the sum, i.e. $\sigma(x_2)$, has partial derivative $0$ as it does not include $x_1$. The argument is exactly the same for $x_2$:
+
+\begin{equation}
+\frac{\partial E}{\partial x_2} = \frac{\partial E}{\partial y} \frac{\partial y}{\partial x_1}= \frac{\partial E}{\partial y} \frac{\partial (\sigma(x_1) + \sigma(x_2))}{\partial x_2} = \frac{\partial E}{\partial y} \frac{\exp(-x_2)}{(1+\exp(-x_2))^2}
+\end{equation}
+
 \subsection{Batch Normalization}
 \subsubsection{(i)}
 For simplicity, we will assume that the inputs are one-dimensional. In the more realistic case of multi dimensional inputs, the Jacobian will have to be computed for each dimension.
