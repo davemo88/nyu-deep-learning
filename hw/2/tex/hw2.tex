@@ -1,5 +1,6 @@
 \documentclass[]{article}
-
+\usepackage{amsmath}
+\usepackage{amssymb}
 %opening
 \title{}
 \author{}
@@ -17,7 +18,36 @@
 \subsection{Backprop through a DAG of modules}
 
 \subsection{Batch Normalization}
-
+\subsubsection{(i)}
+For simplicity, we will assume that the inputs are one-dimensional. In the more realistic case of multi dimensional inputs, the Jacobian will have to be computed for each dimension.
+By the product rule, we have
+\[\dfrac{\partial E}{\partial x} = \dfrac{\partial E}{\partial y}\dfrac{\partial y}{\partial x}\]
+For the partial derivatives of the output with respect to the input $\dfrac{\partial y_i}{\partial x_j}$, consider two cases:
+\paragraph*{$i\neq j$:}
+\begin{align*}
+  \dfrac{\partial y_i}{\partial y_j} &= \dfrac{\partial x_i - \frac{1}{n}\sum_{k=1}^nx_k}{\partial x_j}\dfrac{1}{\sigma(x)} -\dfrac{1}{\sigma^2(x)}\dfrac{\partial \sigma(x)}{\partial x_j}\left(x_i - \frac{1}{n}\sum_{k=1}^n x_k\right) \\
+&=  \dfrac{\mathbf{E}(x) - x_i}{\sigma^2(x)}\dfrac{\partial \sigma(x)}{\partial x_j} -\dfrac{1}{n\sigma(x)}\\
+\end{align*}
+\paragraph*{$i=j$:} 
+In this case, the derivative of the numerator changes:
+\begin{align*}
+  \dfrac{\partial y_i}{\partial x_i} &= \dfrac{\partial x_i - \frac{1}{n}\sum_{k=1}^nx_k}{\partial x_i}\dfrac{1}{\sigma(x)} -\dfrac{1}{\sigma^2(x)}\dfrac{\partial \sigma(x)}{\partial x_i}\left(x_i - \frac{1}{n}\sum_{k=1}^n x_k\right) \\
+&=  \dfrac{\mathbf{E}(x) - x_i}{\sigma^2(x)}\dfrac{\partial \sigma(x)}{\partial x_i} +\dfrac{n-1}{n}\dfrac{x_i}{\sigma(x)}\\  
+\end{align*}
+We still need to compute the derivative of the standard deviation with respect to an element $x_j$:
+\begin{align*}
+  \dfrac{\partial \sigma(x)}{\partial x_j} &= \dfrac{\partial \sigma(x)}{\partial x_j} \\
+                                               &= \dfrac{1}{2\sigma(x)} \dfrac{\partial \frac{1}{n}\sum_{k=1}^n (x_k -\frac{1}{n} \sum_{l=1}^n x_l)^2 }{\partial x_j} \\
+                                               &= \dfrac{1}{2\sigma(x)} \frac{2}{n}\left( \frac{n-1}{n}\left(x_j- \frac{1}{n}\sum_{l=1}^n x_l \right) -\frac{1}{n}\sum_{k\neq j} \left(x_k -\frac{1}{n} \sum_{l=1}^n x_l\right)\right) \\
+                                               &=  \dfrac{1}{n\sigma(x)} \left( \dfrac{n-1}{n}\left(x_j- \mathbf{E}(x) \right) - \dfrac{1}{n}\sum_{k\neq j} (x_k -\mathbf{E}(x))  \right) \\
+&=  \dfrac{1}{n\sigma(x)} \left( x_j-\dfrac{1}{n}\sum_{k=1}^n x_k  \right) \\
+&=  \dfrac{x_j - \mathbf{E}(x) }{n\sigma(x)}  \\
+\end{align*}
+\subsubsection{(ii)}
+To include a parameter $\epsilon$ that shifts the mean, the forward pass will be
+\[y = \dfrac{x-\mathbf{E}(x)}{\sigma(x)} + \epsilon\]
+The Jacobian $\frac{\partial y}{\partial x}$ will remain unchanged as the constant $\epsilon$ disappears when taking derivatives. The partial derivative of $y$ with respect to $\epsilon$ will simply be 1:
+\[\dfrac{\partial y}{\partial \epsilon} = 1\]
 \section{STL-10: semi-supervised image recognition}
 \subsection{Visualization}
 \subsubsection{Filters and Augmentation}
@@ -29,3 +59,7 @@
 \subsection{Supervised Training}
 
 \end{document}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
