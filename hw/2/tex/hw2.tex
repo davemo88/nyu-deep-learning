@@ -17,13 +17,13 @@
 
 \subsection{Backprop through a DAG of modules}
 
-First, we refer to assignment 1 for the partial derivative of the sigmoid function $\sigma(\cdot)$ with respect to the input $x$:
+First, we refer to assignment 1 for the partial derivative of the sigmoid function $\sigma(x)$ with respect to the input:
 
 \begin{equation}
 	\frac{\partial \sigma(x)}{\partial x} = \frac{\partial}{\partial x}\frac{1}{1+\exp(x)} = \frac{\exp(-x)}{(1+\exp(-x))^2}
 \end{equation}
 
-\noindent Now consider $\frac{\partial E}{\partial x_1}$. First, we may note that the max and min layers in this network are irrelevant and so only the sigmoid activations and the sum are important to consider. Thus we have:
+\noindent Now consider $\frac{\partial E}{\partial x_1}$. Note that the max and min layers in the network in question are pointless and so only the sigmoid activations and the sum are necessary to consider. Thus we have:
 
 \begin{equation}
 	\frac{\partial E}{\partial x_1} = \frac{\partial E}{\partial y} \frac{\partial y}{\partial x_1}= \frac{\partial E}{\partial y} \frac{\partial (\sigma(x_1) + \sigma(x_2))}{\partial x_1} = \frac{\partial E}{\partial y} \frac{\exp(-x_1)}{(1+\exp(-x_1))^2}
@@ -67,6 +67,7 @@ To include a parameter $\epsilon$ that shifts the mean, the forward pass will be
 The Jacobian $\frac{\partial y}{\partial x}$ will remain unchanged as the constant $\epsilon$ disappears when taking derivatives. The partial derivative of $y$ with respect to $\epsilon$ will simply be 1:
 \[\dfrac{\partial y}{\partial \epsilon} = 1\]
 \section{STL-10: semi-supervised image recognition}
+We tried to leverage the unlabeled 
 \subsection{Visualization}
 \subsubsection{Filters and Augmentation}
 \subsubsection{t-SNE}
