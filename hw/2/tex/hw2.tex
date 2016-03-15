@@ -75,7 +75,7 @@ The Jacobian $\frac{\partial y}{\partial x}$ will remain unchanged as the consta
 \section{STL-10: semi-supervised image recognition}
 We tried to leverage the unlabeled data in two ways. First we used the \texttt{unsup} package to train a Convolutional PSD Autoencoder \cite{convpsd}. The encoder is a convolution followed by the hyperbolic tangent whereas the decoder is simply a convolution. The idea is to learn filters by finding a sparse encoding of patches of the input images. These filters can later be used to initialize a convnet for supervised training. However our results here were terrible.
 
-Second, we tried to build our own stacked convolutional autoencoders (CAE) from scratch, starting with \cite{swwae}.
+Second, we tried to build our own stacked convolutional autoencoders (CAE) from scratch, starting with \autocite{zhao2015stacked}.
 \subsection{Visualization}
 \subsubsection{Filters}
 
@@ -114,7 +114,7 @@ We extended the given \texttt{BatchFlip} module to perform the following transfo
 \end{figure}
 Adding the Augmentation module increased the speed of convergence of the model. It also helped against overfitting and resulted in a train accuracy close to the validation accuracy.
 \subsection{Unsupervised Training}
-Following loosely the example of several papers, we built a stacked CAE that was trained to minimize reconstruction error. In \autocite{app:A}, the full model architecture is given verbatim. Our architecture was based on two building blocks:
+Following loosely the example of several papers \autocite{zhao2015stacked,masci2011stacked}, we built a stacked CAE that was trained to minimize reconstruction error. In \autoref{app:A}, the full model architecture is given verbatim. Our architecture was based on two building blocks:
 \begin{itemize}
 \item An Encoder Module, consisting of a Convolutional layer, a Spatial-Max-Pooling layer, and Dropout/ReLU/Batch Normalization
 \item A Decoder Module, consisting of a Spatial-Max-Unpooling layer, a Convolution, and ReLU/BatchNormalization
@@ -125,8 +125,12 @@ The loss function used was the sum of the reconstruction losses for each Decoder
 \[\mathcal{L} = \sum_{i=A,B,C} \|\text{Input(i)} - \text{Output(i)}\|_2 \] 
 \subsection{Supervised Training}
 
+
+
+\printbibliography
+
 \appendix
-\section{CAE Architecture}
+\section{CAE Architecture}\label{app:A}
 \begin{verbatim}
 nn.Sequential {
   [input -> (1) -> (2) -> (3) -> output]
