@@ -95,16 +95,17 @@ We extended the given \texttt{BatchFlip} module to perform the following transfo
   \label{fig:aug}
 \end{figure}
 Adding the Augmentation module increased the speed of convergence of the model. It also helped against overfitting and resulted in a train accuracy close to the validation accuracy.
-\subsection{Unsupervised Training}
+\subsection{Stacked Convolutional Autoencoders}
 Following loosely the example of several papers, we built a stacked CAE that was trained to minimize reconstruction error. In \autocite{app:A}, the full model architecture is given verbatim. Our architecture was based on two building blocks:
 \begin{itemize}
 \item An Encoder Module, consisting of a Convolutional layer, a Spatial-Max-Pooling layer, and Dropout/ReLU/Batch Normalization
 \item A Decoder Module, consisting of a Spatial-Max-Unpooling layer, a Convolution, and ReLU/BatchNormalization
 \end{itemize}
-We started by training a single Encoder/Decoder pair by reconstruction loss. We then step-by-step inserted Encoder/Decoder pairs in between the pre-trained Encoder/Decoder pair. After adding two more pairs the model structure looked as follows:\\
+We started by training a single Encoder/Decoder pair by reconstruction loss. We then inserted further Encoder/Decoder pairs in the pre-trained stacked CAE. After adding two more pairs the model structure looked as follows:\\
 \centerline{INPUT - [ENC A - [ENC B - [ENC C - DEC C] - DEC B] - DEC A] - OUTPUT}
 The loss function used was the sum of the reconstruction losses for each Decoder/Encoder Pair.
-\[\mathcal{L} = \sum_{i=A,B,C} \|\text{Input(i)} - \text{Output(i)}\|_2 \] 
+\[\mathcal{L} = \sum_{i=A,B,C} \|\text{Input(i)} - \text{Output(i)}\|_2 \]
+Unfortunately, the weights learned by this method proved to be useless for supervised learning: A model consisting of three Enc  
 \subsection{Supervised Training}
 
 \appendix
