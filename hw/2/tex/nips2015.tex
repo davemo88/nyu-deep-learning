@@ -96,16 +96,17 @@ To include a parameter $\epsilon$ that shifts the mean, the forward pass will be
 The Jacobian $\frac{\partial y}{\partial x}$ will remain unchanged as the constant $\epsilon$ disappears when taking derivatives. The partial derivative of $y$ with respect to $\epsilon$ will simply be 1:
 \[\dfrac{\partial y}{\partial \epsilon} = 1\]
 \section{STL-10: semi-supervised image recognition}
-We tried to leverage the unlabeled data in two ways. First we used the \texttt{unsup} package to train a Convolutional PSD Autoencoder \cite{convpsd}. The encoder is a convolution followed by the hyperbolic tangent whereas the decoder is simply a convolution. The idea is to learn filters by finding a sparse encoding of patches of the input images. These filters can later be used to initialize a convnet for supervised training. However our results here were terrible.
+Our final model used only supervised training as our attempts to leverage the unlabeled data were not entirely successful. However working with the unlabaled data did inspire the architecture of our final model which achieved a modest $\sim70\%$ accuracy (see \autoref{app:A}).
 
-Second, we tried to build our own stacked convolutional autoencoders (CAE) from scratch, starting with \autocite{zhao2015stacked}.
+
+We tried to use the unlabeled data in two ways. First, we tried to build our own stacked what-where convolutional autoencoders (CAE) from scratch, starting with \autocite{zhao2015stacked}.  Second, we used the \texttt{unsup} package to train a PSD Convolutional Autoencoder \cite{psdconv}. We spent the vast majority of our time working on these and describe them later in more detail.
 \subsection{Our Model}
 Our model consisted of three convolutional 'Encoder' layers, followed by a classifier (full architecture see \autoref{app:B}). The specific architecture followed from our attempt to build a stacked CAE to initialize our convolutional weights (see \autoref{sec:scae}); after this failed we used the same architecture with randomly initialized weights for classification.
 \subsection{Visualization}
 \subsubsection{Filters}
 
 \subsubsection{t-SNE}
-We ran t-SNE on the output of each of the stacked encoders.  As one can see from the three figuresin \autoref{app:D}, visually identifiable clusters emerge especially from the second and third encoder outputs. Recall that our final model did not use any unsupervised pre-training and so these clusters come from purely supervised training.
+We ran t-SNE on the output of each of the stacked encoders.  As one can see from the figures in \autoref{app:D}, visually identifiable clusters emerge especially from the second and third encoder outputs. Recall that our final model did not use any unsupervised pre-training and so these clusters come from purely supervised training.
 \subsection{Data Augmentation}
 We extended the given \texttt{BatchFlip} module to an \texttt{Augmentation} module that performed the following transformations for every input in training mode:
 \begin{itemize}
@@ -115,7 +116,7 @@ We extended the given \texttt{BatchFlip} module to an \texttt{Augmentation} modu
 \end{itemize}
 Adding the Augmentation module rapidly increased the speed of convergence of the model ; it achieved after only 30 iterations an accuracy similar to 100 iterations without augmentations. It also helped against overfitting and resulted in a train accuracy close to the validation accuracy. In \autoref{app:E}, examples of the transformations are given.
 \subsection{Stacked CAEs}\label{sec:scae}
-Following loosely the example of several papers \autocite{zhao2015stacked,masci2011stacked}, we built a stacked CAE that was trained to minimize reconstruction error. In \autoref{app:A}, the full model architecture is given verbatim. Our architecture was based on two building blocks:
+Following loosely the example of several papers \autocite{zhao2015stacked,masci2011stacked}, we built a stacked CAE that was trained to minimize reconstruction error. In \autoref{app:B}, the full model architecture is given verbatim. Our architecture was based on two building blocks:
 \begin{itemize}
 \item An Encoder Module, consisting of a Convolutional layer, a Spatial-Max-Pooling layer, and Dropout/ReLU/Batch Normalization
 \item A Decoder Module, consisting of a Spatial-Max-Unpooling layer, a Convolution, and ReLU/BatchNormalization
@@ -146,7 +147,15 @@ We trained a single PSD-CAE on $\sim20000$ unlabeled images before using the wei
 
 \printbibliography
 \appendix
-\section{Stacked CAE Architecture}\label{app:A}
+\section{Kaggle Performance}\label{app:A}
+\begin{figure}[H]
+		\centering
+		\includegraphics[width=\textwidth, keepaspectratio=true]{kaggle}
+		\caption{our Kaggle submission}
+		\label{fig:enc-1}
+\end{figure}
+
+\section{Stacked CAE Architecture}\label{app:B}
 \begin{verbatim}
 nn.Sequential {
   [input -> (1) -> (2) -> (3) -> output]
@@ -202,10 +211,47 @@ nn.Sequential {
 }
 \end{verbatim}
 
-\section{Kaggle Performance}\label{app:B}
-
 \section{Supervised Model}\label{app:C}
+\begin{verbatim}
+nn.Sequential {
+  [input -> (1) -> (2) -> (3) -> (4) -> (5) -> output]
+  (1): nn.Sequential {
+    [input -> (1) -> (2) -> (3) -> (4) -> (5) -> output]
+    (1): nn.SpatialConvolution(3 -> 64, 3x3, 1,1, 1,1)
+    (2): nn.SpatialMaxPooling(2,2,2,2)
+    (3): nn.SpatialBatchNormalization
+    (4): nn.ReLU
+    (5): nn.Dropout(0.500000)
+  }
+  (2): nn.Sequential {
+    [input -> (1) -> (2) -> (3) -> (4) -> (5) -> output]
+    (1): nn.SpatialConvolution(64 -> 128, 3x3, 1,1, 1,1)
+    (2): nn.SpatialMaxPooling(2,2,2,2)
+    (3): nn.SpatialBatchNormalization
+    (4): nn.ReLU
+    (5): nn.Dropout(0.500000)
+  }
+  (3): nn.Sequential {
+    [input -> (1) -> (2) -> (3) -> (4) -> (5) -> output]
+    (1): nn.SpatialConvolution(128 -> 256, 3x3, 1,1, 1,1)
+    (2): nn.SpatialMaxPooling(2,2,2,2)
+    (3): nn.SpatialBatchNormalization
+    (4): nn.ReLU
+    (5): nn.Dropout(0.500000)
+  }
+  (4): nn.View(36864)
+  (5): nn.Sequential {
+    [input -> (1) -> (2) -> (3) -> (4) -> (5) -> (6) -> output]
+    (1): nn.Dropout(0.500000)
+    (2): nn.Linear(36864 -> 512)
+    (3): nn.BatchNormalization
+    (4): nn.ReLU
+    (5): nn.Dropout(0.500000)
+    (6): nn.Linear(512 -> 10)
+  }
+}
 
+\end{verbatim}
 
 
 \section{t-SNE}\label{app:D}
@@ -228,7 +274,7 @@ nn.Sequential {
 	\caption{t-SNE applied to output of third encoder}
 	\label{fig:enc-3}
 \end{figure}
-\section{Augmenattions}\label{app:E}
+\section{Augmentations}\label{app:E}
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth, keepaspectratio=true]{augmentation}
