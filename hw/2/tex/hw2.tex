@@ -1,5 +1,8 @@
 \documentclass[]{article}
 \usepackage{amsmath}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{hyperref}
 \usepackage{amssymb}
 %opening
 \title{}
@@ -68,15 +71,31 @@ The Jacobian $\frac{\partial y}{\partial x}$ will remain unchanged as the consta
 \[\dfrac{\partial y}{\partial \epsilon} = 1\]
 \section{STL-10: semi-supervised image recognition}
 \subsection{Visualization}
-\subsubsection{Filters and Augmentation}
-\subsubsection{t-SNE}
-\subsection{Data Augmentation}
+\subsubsection{Filters}
 
+\subsubsection{t-SNE}
+
+\subsection{Data Augmentation}
+We extended the given \texttt{BatchFlip} module to perform the following transformation for every input in training mode:
+\begin{itemize}
+\item Rotate by a Radians chosen uniformly at random from [-0.2,0.2]
+\item Translate the x- and y-coordinates by randomly chosen integers between -9 and 9
+\item Add Gaussian Noise with a mean of zero and standard deviation of 0.3 to the U and V components, then divide by 1.3 to ensure the inputs come from a distribution with zero mean and unit variance. 
+\end{itemize}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio=true]{augmentation}
+  \caption{Six randomly selected input images and 5 exemplary transformations; the original (normalized) images are to the left}
+  \label{fig:aug}
+\end{figure}
+Adding the Augmentation module increased the speed of convergence of the model. It also helped against overfitting and resulted in a train accuracy close to the validation accuracy.
 \subsection{Unsupervised Training}
 
 \subsection{Supervised Training}
 
+
 \end{document}
+
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: t
