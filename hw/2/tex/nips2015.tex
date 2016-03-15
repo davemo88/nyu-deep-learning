@@ -101,6 +101,7 @@ We tried to leverage the unlabeled data in two ways. First we used the \texttt{u
 Second, we tried to build our own stacked convolutional autoencoders (CAE) from scratch, starting with \autocite{zhao2015stacked}.
 \subsection{Visualization}
 \subsubsection{Filters}
+We included filters from each of the three coders (see \autoref{app:E}). One can see that the filters have some structure, e.g. the first encoder's filters look like the desired edges and color blobs.
 
 \subsubsection{t-SNE}
 We ran t-SNE on the output of each of the stacked encoders. As one can see from the following three figures, visually identifiable clusters emerge especially from the second and third encoder outputs. Recall that our final model did not use any unsupervised pre-training and so these clusters come from purely supervised training.
@@ -223,6 +224,8 @@ nn.Sequential {
   }
 }
 \end{verbatim}
+
+
 
 \end{document}
 
