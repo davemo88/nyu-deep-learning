@@ -1,81 +1,85 @@
 require 'xlua'
 require 'optim'
+require 'unsup'
 require 'cunn'
+require 'image'
 
-dofile './provider.lua'
+dofile './supervised_provider.lua'
+dofile './augmentation.lua'
+
 local c = require 'trepl.colorize'
 
 opt = lapp[[
    -s,--save                  (default "logs")      subdirectory to save logs
-   -b,--batchSize             (default 64)          batch size
+   -b,--batchSize             (default 32)          batch size
    -r,--learningRate          (default 1)        learning rate
    --learningRateDecay        (default 1e-7)      learning rate decay
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
    --epoch_step               (default 25)          epoch step
-   --model                    (default supervised_model)     model name
+   --model                    (default vgg_bn_drop)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --backend                  (default nn)            backend
 ]]
 
 print(opt)
 
-do -- data augmentation module
-  local BatchFlip,parent = torch.class('nn.BatchFlip', 'nn.Module')
 
-  function BatchFlip:__init()
-    parent.__init(self)
-    self.train = true
-  end
+-- do -- data augmentation module
+--   local Augmentation,parent = torch.class('nn.Augmentation', 'nn.Module')
 
- 
- function BatchFlip:updateOutput(input)
-    out = torch.Tensor(input:size()):copy(input)
-    if self.train then
-      local bs = input:size(1)
-      --print(type(out))
-      --print(out:size())
-      local flip_mask = torch.randperm(bs):le(bs/2)
-      for i=1,input:size(1) do
-        if flip_mask[i] == 1 then image.hflip(out[i], out[i]) end
-        --Add Gaussian Noise
-        uNoise = torch.normal(0,0.2)
-        vNoise = torch.normal(0,0.2)
-        out[i][2] = (out[i][2] + uNoise)/1.2
-        out[i][3] = (out[i][3] + vNoise )/1.2
-        --Translate
-        xTrans = torch.random(-9,9)
-        yTrans = torch.random(-9,9)
-        out[i] = image.translate(out[i], xTrans, yTrans) 
-        -- Rotate
-        theta = torch.uniform(-0.2,0.2)
-        out[i] = image.rotate(out[i], theta)
-      end
-    end
-    self.output = out
-    return self.output
-  end
-end
+--   function Augmentation:__init()
+--     parent.__init(self)
+--     self.train = true
+--   end
 
+--   function Augmentation:updateOutput(input)
+--     if self.train then
+--       local bs = input:size(1)
+--       self.output = torch.FloatTensor(input:size()):copy(input)
+--       local flip_mask = torch.randperm(bs):le(bs/2)
+--       for i=1,bs do
+--         -- Flip
+--         if flip_mask[i] == 1 then image.hflip(self.output[i], self.output[i]) end
+--         -- Add Gaussian Noise
+--         uNoise = torch.normal(0,0.2)
+--         vNoise = torch.normal(0,0.2)
+--         self.output[i][2] = (self.output[i][2] + uNoise)/1.2
+--         self.output[i][3] = (self.output[i][3] + vNoise )/1.2
+--         -- Rotate
+--         deg = torch.uniform(-0.2,0.2)
+--         self.output[i] = image.rotate(self.output[i], deg, 'bilinear') 
+
+--         -- Translate
+--         xTrans = torch.random(-6,6)
+--         yTrans = torch.random(-6,6)
+--         self.output[i] = image.translate(self.output[i], xTrans, yTrans) 
+--       end
+--     end
+--     return self.output
+--   end
+-- end
+
+psd_conv = torch.load('out4.psd/psd,encoderType=tanh,kernelsize=3,lambda=1/model.bin')
+
+vgg = dofile(opt.model..'.lua')
+vgg:get(1).weight = psd_conv.encoder:get(1).weight:reshape(64,3,3,3)
+
+--vgg = torch.load('dk-model.net')
 
 print(c.blue '==>' ..' configuring model')
 local model = nn.Sequential()
-model:add(nn.BatchFlip():float())
+model:add(nn.Augmentation():float())
 model:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
-model:add(dofile('models/'..opt.model..'.lua'):cuda())
+model:add(vgg:cuda())
 model:get(2).updateGradInput = function(input) return end
-
-
-if opt.backend == 'cudnn' then
-   require 'cudnn'
-   cudnn.convert(model:get(3), cudnn)
-end
 
 print(model)
 
 print(c.blue '==>' ..' loading data')
-provider = torch.load 'test_provider.t7'
-provider.trainData.data = provider.testData.data:float()
+provider = torch.load 'provider.t7'
+provider.trainData.data = provider.trainData.data:float()
+provider.valData.data = provider.valData.data:float()
 
 confusion = optim.ConfusionMatrix(10)
 
@@ -119,13 +123,14 @@ function train()
   for t,v in ipairs(indices) do
     xlua.progress(t, #indices)
 
-    local inputs = provider.trainData.data:index(1,v)
+    local inputs = provider.trainData.data:index(1,v):float()
+
     targets:copy(provider.trainData.labels:index(1,v))
 
     local feval = function(x)
       if x ~= parameters then parameters:copy(x) end
       gradParameters:zero()
-      
+
       local outputs = model:forward(inputs)
       local f = criterion:forward(outputs, targets)
       local df_do = criterion:backward(outputs, targets)
@@ -146,20 +151,37 @@ function train()
 
   confusion:zero()
   epoch = epoch + 1
+
+  if epoch % 5 == 0 then
+    local filename = paths.concat(opt.save, 'model_' .. epoch .. '.net')
+    print('==> saving model to '..filename)
+    torch.save(filename, model)
+  end
+
 end
+
 
 function val()
   -- disable flips, dropouts and batch normalization
+  -- model:remove(2)
+  -- model:remove(1)
   model:evaluate()
   print(c.blue '==>'.." valing")
   local bs = 25
   for i=1,provider.valData.data:size(1),bs do
-    local outputs = model:forward(provider.testData.data:narrow(1,i,bs))
-    confusion:batchAdd(outputs, provider.testData.labels:narrow(1,i,bs))
+
+    local outputs = model:forward(provider.valData.data:narrow(1,i,bs))
+    confusion:batchAdd(outputs, provider.valData.labels:narrow(1,i,bs))
   end
 
   confusion:updateValids()
   print('val accuracy:', confusion.totalValid * 100)
+  
+  if valLogger then
+    paths.mkdir(opt.save)
+    valLogger:add{train_acc, confusion.totalValid * 100}
+    valLogger:style{'-','-'}
+    valLogger:plot()
 
     local base64im
     do
@@ -191,18 +213,20 @@ function val()
     file:close()
   end
 
-  -- save model every 50 epochs
+  -- save model every 5 epochs
   if epoch % 5 == 0 then
-    local filename = paths.concat(opt.save, 'model.net')
-    print('==> saving model to '..filename)
-    torch.save(filename, model:get(3))
+    local filename = paths.concat(opt.save, 'model_' .. epoch .. '.net')
+    print('==> saving model')
+    torch.save(filename, model)
   end
 
   confusion:zero()
 end
 
+
 for i=1,opt.max_epoch do
   train()
   val()
 end
+
 

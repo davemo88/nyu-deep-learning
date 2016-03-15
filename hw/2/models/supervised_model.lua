@@ -12,7 +12,6 @@ for i=1,num_enc-1 do
 	model:add(enc)
 end
 
-
 -- Put a linear view on top of the last Encoder
 linear_s = (64*96*96) / (math.pow(2,num_enc+1))
 model:add(nn.View(linear_s))
