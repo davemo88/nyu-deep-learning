@@ -1,3 +1,4 @@
+
 require 'nn'
 require 'image'
 require 'xlua'
@@ -24,43 +25,36 @@ end
 local Provider = torch.class 'Provider'
 
 function Provider:__init(full)
-  local trsize = 4000
-  local valsize = 1000  -- Use the validation here as the valing set
+  local nclumps = 10
+  local trsize = 800
   local channel = 3
   local height = 96
   local width = 96
 
-  -- download dataset
-  if not paths.dirp('stl-10') then
-     os.execute('mkdir stl-10')
-     local www = {
-         train = 'https://s3.amazonaws.com/dsga1008-spring16/data/a2/train.t7b',
-         val = 'https://s3.amazonaws.com/dsga1008-spring16/data/a2/val.t7b',
-         extra = 'https://s3.amazonaws.com/dsga1008-spring16/data/a2/extra.t7b',
-         test = 'https://s3.amazonaws.com/dsga1008-spring16/data/a2/test.t7b'
-     }
-     os.execute('wget ' .. www.test .. '; '.. 'mv test.t7b stl-10/test.t7b')
-  end
 
-  local raw_test = torch.load('stl-10/test.t7b')
+  local raw_test = torch.load('test.t7b')
 
   -- load and parse dataset
   self.testData = {
-     data = torch.Tensor(),
-     labels = torch.Tensor(),
-     size = function() return trsize end
+     data = torch.Tensor(nclumps * trsize, channel, height, width),
+     size = function() return nclumps * trsize end
   }
-  self.testData.data, self.testData.labels = parseDataLabel(raw_test.data,
-                                                   trsize, channel, height, width)
-  local testData = self.testData
+  for i=1, nclumps do
+    for j=1, trsize do
+      idx = (trsize * (i-1)) + j
+      self.testData.data[idx]:copy(raw_test.data[i][j])
+    end
+  end
+
+  -- local testData = self.testData
 
   -- convert from ByteTensor to Float
   self.testData.data = self.testData.data:float()
-  self.testData.labels = self.testData.labels:float()
+  -- self.testData.labels = self.testData.labels:float()
   collectgarbage()
 end
 
-function Provider:normalize()
+function Provider:normalize(stats)
   ----------------------------------------------------------------------
   -- preprocess/normalize train/val sets
   --
@@ -81,15 +75,11 @@ function Provider:normalize()
      testData.data[i] = yuv
   end
   -- normalize u globally:
-  local mean_u = testData.data:select(2,2):mean()
-  local std_u = testData.data:select(2,2):std()
-  testData.data:select(2,2):add(-mean_u)
-  testData.data:select(2,2):div(std_u)
+  testData.data:select(2,2):add(-stats.mu)
+  testData.data:select(2,2):div(stats.su)
   -- normalize v globally:
-  local mean_v = testData.data:select(2,3):mean()
-  local std_v = testData.data:select(2,3):std()
-  testData.data:select(2,3):add(-mean_v)
-  testData.data:select(2,3):div(std_v)
+  testData.data:select(2,3):add(-stats.mv)
+  testData.data:select(2,3):div(stats.sv)
 
   testData.mean_u = mean_u
   testData.std_u = std_u
