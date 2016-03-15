@@ -17,7 +17,6 @@ p.trainData.data  = p.trainData.data[{{1,N}}]
 p.trainData.labels  = p.trainData.labels[{{1,N}}]
 
 
-
 x = torch.DoubleTensor(p.trainData.data:size()):copy(p.trainData.data)
 x:resize(x:size(1), x:size(2) * x:size(3) * x:size(4))
 
