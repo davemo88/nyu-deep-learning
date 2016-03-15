@@ -128,10 +128,23 @@ The loss function used was the sum of the reconstruction losses for each Decoder
 
 \subsection{PSD Convolutional Autoencoder}
 
-We also trained a PSD Convolutional Autoencoder. This is inspired by \cite{convpsd} and is available from \texttt{unsup} package in \texttt{Torch} 
+We also trained a PSD Convolutional Autoencoder (PSD-CAE). This is inspired by \cite{psdconv} and is available from \texttt{unsup} package available for \texttt{Torch}. The architecture is very simple. The encoder is as follows:
+\begin{verbatim}
+nn.Sequential {
+[input -> (1) -> (2) -> (3) -> output]
+(1): nn.SpatialConvolutionMap
+(2): nn.Tanh
+(3): nn.Diag
+}
+\end{verbatim}
 
+\noindent The decoder is an \texttt{unsup.SpatialConvFistaL1} which seeks an L1-regularized solution. This encourages the weights of the encoder to be sparse. This is good because the encoder increases the dimension of the input representation and so some regularization is necessary in order to avoid learning trivial maps that memorize the input. This would be not be necessary in a deeper architecture that ultimately reduces the dimension of the input representation.
+
+Ultimately we thought to stack a couple of these, training each layer in a greedy fashion. We would then use the weights from the convolutional layers for initialization in supervised training. However there was a problem in training using the \texttt{unsup.ConvPSD} package: we couldn't get it to run on the GPU. Thus the training was quite slow and so we could not make it through enough epochs.
+
+We trained a single PSD-CAE on $\sim20000$ unlabeled images before using the weights to initialize the first convolutional layer in the given VGG model but the results were not identifiably better than the randomly initialized VGG model.
 \appendix
-\section{CAE Architecture}
+\section{Stacked CAE Architecture}
 \begin{verbatim}
 nn.Sequential {
   [input -> (1) -> (2) -> (3) -> output]
