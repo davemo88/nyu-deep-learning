@@ -70,14 +70,14 @@ To include a parameter $\epsilon$ that shifts the mean, the forward pass will be
 The Jacobian $\frac{\partial y}{\partial x}$ will remain unchanged as the constant $\epsilon$ disappears when taking derivatives. The partial derivative of $y$ with respect to $\epsilon$ will simply be 1:
 \[\dfrac{\partial y}{\partial \epsilon} = 1\]
 \section{STL-10: semi-supervised image recognition}
-We tried to leverage the unlabeled data in two ways. First we used the unsup package to train a Convolutional PSD Autoencoder \cite{convpsd}. The encoder is a convolution followed by the hyperbolic tangent whereas the decoder is simply a convolution. The idea is to learn filters by finding a sparse encoding of patches of the input images. These filters can later be used to initialize a convnet for supervised training. However our results here were terrible.
+We tried to leverage the unlabeled data in two ways. First we used the \texttt{unsup} package to train a Convolutional PSD Autoencoder \cite{convpsd}. The encoder is a convolution followed by the hyperbolic tangent whereas the decoder is simply a convolution. The idea is to learn filters by finding a sparse encoding of patches of the input images. These filters can later be used to initialize a convnet for supervised training. However our results here were terrible.
 
 Second, we tried to build our own stacked convolutional autoencoders (CAE) from scratch, starting with \cite{swwae}.
 \subsection{Visualization}
 \subsubsection{Filters}
 
 \subsubsection{t-SNE}
-We ran t-SNE on the output of each of the stacked encoders. As one can see from the following three images, visually defined clusters begin to emerge after the third encoder. Recall that our final model did not use any unsupervised pre-training and so these clusters come purely supervised training.
+We ran t-SNE on the output of each of the stacked encoders. As one can see from the following three figures, visually identifiable clusters emerge especially from the second and third encoder outputs. Recall that our final model did not use any unsupervised pre-training and so these clusters come from purely supervised training.
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-1}
