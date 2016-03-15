@@ -13,7 +13,7 @@
 %\documentstyle[nips14submit_09,times,art10]{article} % For LaTeX 2.09
 
 
-\title{Assignment 2 Deep Learning ST '16}
+\title{Assignment 2 Deep Learning Spring 2016}
 
 
 \author{
@@ -96,7 +96,7 @@ To include a parameter $\epsilon$ that shifts the mean, the forward pass will be
 The Jacobian $\frac{\partial y}{\partial x}$ will remain unchanged as the constant $\epsilon$ disappears when taking derivatives. The partial derivative of $y$ with respect to $\epsilon$ will simply be 1:
 \[\dfrac{\partial y}{\partial \epsilon} = 1\]
 \section{STL-10: semi-supervised image recognition}
-Our final model used only supervised training as our attempts to leverage the unlabeled data were not entirely successful. However working with the unlabaled data did inspire the architecture of our final model which achieved a modest $\sim70\%$ accuracy (see \autoref{app:A}).
+Our final model used only supervised training as our attempts to leverage the unlabeled data were not entirely successful. However working with the unlabeled data did inspire the architecture of our final model which achieved a modest $\sim70\%$ accuracy (see \autoref{app:A}).
 
 
 We tried to use the unlabeled data in two ways. First, we tried to build our own stacked what-where convolutional autoencoders (CAE) from scratch, starting with \autocite{zhao2015stacked}.  Second, we used the \texttt{unsup} package to train a PSD Convolutional Autoencoder \cite{psdconv}. We spent the vast majority of our time working on these and describe them later in more detail.
@@ -144,9 +144,9 @@ nn.Sequential {
 Ultimately we thought to stack a couple of these, training each layer in a greedy fashion. We would then use the weights from the convolutional layers for initialization in supervised training. However there was a problem in training using the \texttt{unsup.ConvPSD} package: we couldn't get it to run on the GPU. Thus the training was quite slow and so we could not make it through enough epochs.
 
 We trained a single PSD-CAE on $\sim20000$ unlabeled images before using the weights to initialize the first convolutional layer in the given VGG model but the results were not identifiably better than the randomly initialized VGG model.
-\subsection{Supervised Training}
 
 \printbibliography
+
 \appendix
 \section{Kaggle Performance}\label{app:A}
 \begin{figure}[H]
