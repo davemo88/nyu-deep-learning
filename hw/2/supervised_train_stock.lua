@@ -1,23 +1,26 @@
 require 'xlua'
 require 'optim'
-require 'cunn'
+require 'image'
+require 'nn'
 dofile './provider.lua'
 local c = require 'trepl.colorize'
 
+
 opt = lapp[[
    -s,--save                  (default "logs")      subdirectory to save logs
-   -b,--batchSize             (default 64)          batch size
+   -b,--batchSize             (default 32)          batch size
    -r,--learningRate          (default 1)        learning rate
    --learningRateDecay        (default 1e-7)      learning rate decay
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
    --epoch_step               (default 25)          epoch step
-   --model                    (default supervised_model)     model name
-   --max_epoch                (default 300)           maximum number of iterations
-   --backend                  (default nn)            backend
+   --model                    (default "supervised_model")     model name
+   max_epoch                (default 300)  
 ]]
 
+batchSize = 9
 print(opt)
+
 
 do -- data augmentation module
   local BatchFlip,parent = torch.class('nn.BatchFlip', 'nn.Module')
@@ -29,11 +32,9 @@ do -- data augmentation module
 
  
  function BatchFlip:updateOutput(input)
-    out = torch.Tensor(input:size()):copy(input)
     if self.train then
       local bs = input:size(1)
-      --print(type(out))
-      --print(out:size())
+      local out = torch.Tensor(input:size()):copy(input)
       local flip_mask = torch.randperm(bs):le(bs/2)
       for i=1,input:size(1) do
         if flip_mask[i] == 1 then image.hflip(out[i], out[i]) end
@@ -51,7 +52,7 @@ do -- data augmentation module
         out[i] = image.rotate(out[i], theta)
       end
     end
-    self.output = out
+    self.output:set(out)
     return self.output
   end
 end
@@ -60,43 +61,42 @@ end
 print(c.blue '==>' ..' configuring model')
 local model = nn.Sequential()
 model:add(nn.BatchFlip():float())
-model:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
-model:add(dofile('models/'..opt.model..'.lua'):cuda())
+--model:add(nn.Copy('torch.FloatTensor','torch.CudaTensor')):cuda()
+model:add(dofile('models/'.. 'supervised_model'..'.lua'))
 model:get(2).updateGradInput = function(input) return end
 
-if opt.backend == 'cudnn' then
-   require 'cudnn'
-   cudnn.convert(model:get(3), cudnn)
-end
+
 
 print(model)
 
 print(c.blue '==>' ..' loading data')
 provider = torch.load 'provider.t7'
-provider.trainData.data = provider.trainData.data:float()
-provider.valData.data = provider.valData.data:float()
+provider.trainData.data = provider.trainData.data[{{1,batchSize*2}}]:float()
+provider.valData.data = provider.valData.data[{{1,batchSize*2}}]:float()
+print(provider.trainData.data:size())
+print(provider.valData.data:size())
 
 confusion = optim.ConfusionMatrix(10)
 
-print('Will save at '..opt.save)
-paths.mkdir(opt.save)
-valLogger = optim.Logger(paths.concat(opt.save, 'val.log'))
-valLogger:setNames{'% mean class accuracy (train set)', '% mean class accuracy (val set)'}
-valLogger.showPlot = false
+-- print('Will save at '..opt.save)
+-- paths.mkdir(opt.save)
+-- valLogger = optim.Logger(paths.concat(opt.save, 'val.log'))
+-- valLogger:setNames{'% mean class accuracy (train set)', '% mean class accuracy (val set)'}
+-- valLogger.showPlot = false
 
 parameters,gradParameters = model:getParameters()
 
 
 print(c.blue'==>' ..' setting criterion')
-criterion = nn.CrossEntropyCriterion():cuda()
+criterion = nn.CrossEntropyCriterion()
 
 
 print(c.blue'==>' ..' configuring optimizer')
 optimState = {
-  learningRate = opt.learningRate,
-  weightDecay = opt.weightDecay,
-  momentum = opt.momentum,
-  learningRateDecay = opt.learningRateDecay,
+  learningRate = learningRate,
+  weightDecay = weightDecay,
+  momentum = momentum,
+  learningRateDecay = learningRateDecay,
 }
 
 
@@ -105,15 +105,14 @@ function train()
   epoch = epoch or 1
 
   -- drop learning rate every "epoch_step" epochs
-  if epoch % opt.epoch_step == 0 then optimState.learningRate = optimState.learningRate/2 end
+  if epoch % epoch_step == 0 then optimState.learningRate = optimState.learningRate/2 end
   
-  print(c.blue '==>'.." online epoch # " .. epoch .. ' [batchSize = ' .. opt.batchSize .. ']')
+  print(c.blue '==>'.." online epoch # " .. epoch .. ' [batchSize = ' .. batchSize .. ']')
 
-  local targets = torch.CudaTensor(opt.batchSize)
-  local indices = torch.randperm(provider.trainData.data:size(1)):long():split(opt.batchSize)
+  local targets = torch.Tensor(batchSize)
+  local indices = torch.randperm(provider.trainData.data:size(1)):long():split(batchSize)
   -- remove last element so that all the batches have equal size
   indices[#indices] = nil
-
   local tic = torch.tic()
   for t,v in ipairs(indices) do
     xlua.progress(t, #indices)
@@ -152,8 +151,8 @@ function val()
   -- disable flips, dropouts and batch normalization
   model:evaluate()
   print(c.blue '==>'.." valing")
-  local bs = 25
-  for i=1,provider.valData.data:size(1),bs do
+  local bs = 8
+  for i=1,bs*2,bs do
     local outputs = model:forward(provider.valData.data:narrow(1,i,bs))
     confusion:batchAdd(outputs, provider.valData.labels:narrow(1,i,bs))
   end
@@ -161,45 +160,45 @@ function val()
   confusion:updateValids()
   print('val accuracy:', confusion.totalValid * 100)
   
-  if valLogger then
-    paths.mkdir(opt.save)
-    valLogger:add{train_acc, confusion.totalValid * 100}
-    valLogger:style{'-','-'}
-    valLogger:plot()
+  -- if valLogger then
+  --   paths.mkdir(opt.save)
+  --   valLogger:add{train_acc, confusion.totalValid * 100}
+  --   valLogger:style{'-','-'}
+  --   valLogger:plot()
 
-    local base64im
-    do
-      os.execute(('convert -density 200 %s/val.log.eps %s/val.png'):format(opt.save,opt.save))
-      os.execute(('openssl base64 -in %s/val.png -out %s/val.base64'):format(opt.save,opt.save))
-      local f = io.open(opt.save..'/val.base64')
-      if f then base64im = f:read'*all' end
-    end
+  --   local base64im
+  --   do
+  --     os.execute(('convert -density 200 %s/val.log.eps %s/val.png'):format(opt.save,opt.save))
+  --     os.execute(('openssl base64 -in %s/val.png -out %s/val.base64'):format(opt.save,opt.save))
+  --     local f = io.open(opt.save..'/val.base64')
+  --     if f then base64im = f:read'*all' end
+  --   end
 
-    local file = io.open(opt.save..'/report.html','w')
-    file:write(([[
-    <!DOCTYPE html>
-    <html>
-    <body>
-    <title>%s - %s</title>
-    <img src="data:image/png;base64,%s">
-    <h4>optimState:</h4>
-    <table>
-    ]]):format(opt.save,epoch,base64im))
-    for k,v in pairs(optimState) do
-      if torch.type(v) == 'number' then
-        file:write('<tr><td>'..k..'</td><td>'..v..'</td></tr>\n')
-      end
-    end
-    file:write'</table><pre>\n'
-    file:write(tostring(confusion)..'\n')
-    file:write(tostring(model)..'\n')
-    file:write'</pre></body></html>'
-    file:close()
-  end
+  --   local file = io.open(opt.save..'/report.html','w')
+  --   file:write(([[
+  --   <!DOCTYPE html>
+  --   <html>
+  --   <body>
+  --   <title>%s - %s</title>
+  --   <img src="data:image/png;base64,%s">
+  --   <h4>optimState:</h4>
+  --   <table>
+  --   ]]):format(opt.save,epoch,base64im))
+  --   for k,v in pairs(optimState) do
+  --     if torch.type(v) == 'number' then
+  --       file:write('<tr><td>'..k..'</td><td>'..v..'</td></tr>\n')
+  --     end
+  --   end
+  --   file:write'</table><pre>\n'
+  --   file:write(tostring(confusion)..'\n')
+  --   file:write(tostring(model)..'\n')
+  --   file:write'</pre></body></html>'
+  --   file:close()
+  -- end
 
   -- save model every 50 epochs
   if epoch % 5 == 0 then
-    local filename = paths.concat(opt.save, 'model.net')
+    local filename = paths.concat(save, 'model.net')
     print('==> saving model to '..filename)
     torch.save(filename, model:get(3))
   end
@@ -208,7 +207,11 @@ function val()
 end
 
 
-for i=1,opt.max_epoch do
+for i=1,max_epoch do
   train()
   val()
 end
+
+return provider.trainData.data
+
+
