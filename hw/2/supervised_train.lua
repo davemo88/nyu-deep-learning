@@ -21,15 +21,15 @@ opt = lapp[[
 print(opt)
 
 do -- data augmentation module
-  local BatchFlip,parent = torch.class('nn.BatchFlip', 'nn.Module')
+  local Augmentation,parent = torch.class('nn.BatchFlip', 'nn.Module')
 
-  function BatchFlip:__init()
+  function Augmentation:__init()
     parent.__init(self)
     self.train = true
   end
 
  
- function BatchFlip:updateOutput(input)
+ function Augmentation:updateOutput(input)
     out = torch.Tensor(input:size()):copy(input)
     if self.train then
       local bs = input:size(1)
@@ -60,12 +60,12 @@ end
 
 print(c.blue '==>' ..' configuring model')
 local model = nn.Sequential()
-model:add(nn.BatchFlip():float())
+model:add(nn.Augmentation():float())
 model:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
 model:add(dofile('models/'..opt.model..'.lua'):cuda())
 model:get(2).updateGradInput = function(input) return end
 
-
+print(model)
 if opt.backend == 'cudnn' then
    require 'cudnn'
    cudnn.convert(model:get(3), cudnn)

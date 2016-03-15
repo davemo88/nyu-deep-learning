@@ -73,32 +73,14 @@ To include a parameter $\epsilon$ that shifts the mean, the forward pass will be
 The Jacobian $\frac{\partial y}{\partial x}$ will remain unchanged as the constant $\epsilon$ disappears when taking derivatives. The partial derivative of $y$ with respect to $\epsilon$ will simply be 1:
 \[\dfrac{\partial y}{\partial \epsilon} = 1\]
 \section{STL-10: semi-supervised image recognition}
-We tried to leverage the unlabeled data in two ways. First we used the \texttt{unsup} package to train a Convolutional PSD Autoencoder \cite{convpsd}. The encoder is a convolution followed by the hyperbolic tangent whereas the decoder is simply a convolution. The idea is to learn filters by finding a sparse encoding of patches of the input images. These filters can later be used to initialize a convnet for supervised training. However our results here were terrible.
+We tried to leverage the unlabeled data in two ways. First we used the unsup package to train a Convolutional PSD Autoencoder \cite{convpsd}. The encoder is a convolution followed by the hyperbolic tangent whereas the decoder is simply a convolution. The idea is to learn filters by finding a sparse encoding of patches of the input images. These filters can later be used to initialize a convnet for supervised training. However our results here were terrible.
 
-Second, we tried to build our own stacked convolutional autoencoders (CAE) from scratch, starting with \cite{swwae}.
+Second, we tried to build our own stacked convolutional autoencoders from scratch, starting with \cite{swwae}. 
 \subsection{Visualization}
 \subsubsection{Filters}
 
 \subsubsection{t-SNE}
-We ran t-SNE on the output of each of the stacked encoders. As one can see from the following three figures, visually identifiable clusters emerge especially from the second and third encoder outputs. Recall that our final model did not use any unsupervised pre-training and so these clusters come from purely supervised training.
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-1}
-	\caption{t-SNE applied to output of first encoder}
-	\label{fig:enc-1}
-\end{figure}
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-2}
-	\caption{t-SNE applied to output of second encoder}
-	\label{fig:enc-2}
-\end{figure}
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-3}
-	\caption{t-SNE applied to output of third encoder}
-	\label{fig:enc-3}
-\end{figure}
+
 \subsection{Data Augmentation}
 We extended the given \texttt{BatchFlip} module to perform the following transformation for every input in training mode:
 \begin{itemize}
@@ -113,22 +95,18 @@ We extended the given \texttt{BatchFlip} module to perform the following transfo
   \label{fig:aug}
 \end{figure}
 Adding the Augmentation module increased the speed of convergence of the model. It also helped against overfitting and resulted in a train accuracy close to the validation accuracy.
-\subsection{Unsupervised Training}
+\subsection{Stacked Convolutional Autoencoders}
 Following loosely the example of several papers, we built a stacked CAE that was trained to minimize reconstruction error. In \autocite{app:A}, the full model architecture is given verbatim. Our architecture was based on two building blocks:
 \begin{itemize}
 \item An Encoder Module, consisting of a Convolutional layer, a Spatial-Max-Pooling layer, and Dropout/ReLU/Batch Normalization
 \item A Decoder Module, consisting of a Spatial-Max-Unpooling layer, a Convolution, and ReLU/BatchNormalization
 \end{itemize}
-We started by training a single Encoder/Decoder pair by reconstruction loss. We then step-by-step inserted Encoder/Decoder pairs in between the pre-trained Encoder/Decoder pair. After adding two more pairs the model structure looked as follows:\\
+We started by training a single Encoder/Decoder pair by reconstruction loss. We then inserted further Encoder/Decoder pairs in the pre-trained stacked CAE. After adding two more pairs the model structure looked as follows:\\
 \centerline{INPUT - [ENC A - [ENC B - [ENC C - DEC C] - DEC B] - DEC A] - OUTPUT}
 The loss function used was the sum of the reconstruction losses for each Decoder/Encoder Pair.
-\[\mathcal{L} = \sum_{i=A,B,C} \|\text{Input(i)} - \text{Output(i)}\|_2 \] 
+\[\mathcal{L} = \sum_{i=A,B,C} \|\text{Input(i)} - \text{Output(i)}\|_2 \]
+Unfortunately, the weights learned by this method proved to be useless for supervised learning: A model consisting of three Enc  
 \subsection{Supervised Training}
-
-
-\subsection{PSD Convolutional Autoencoder}
-
-We also trained a PSD Convolutional Autoencoder. This is inspired by \cite{convpsd} and is available from \texttt{unsup} package in \texttt{Torch} 
 
 \appendix
 \section{CAE Architecture}
@@ -186,7 +164,6 @@ nn.Sequential {
   }
 }
 \end{verbatim}
->>>>>>> 18a87681bf19a4c53c1c83c4f94e4110a227d6b4
 \end{document}
 
 %%% Local Variables:
