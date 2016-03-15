@@ -99,51 +99,29 @@ The Jacobian $\frac{\partial y}{\partial x}$ will remain unchanged as the consta
 We tried to leverage the unlabeled data in two ways. First we used the \texttt{unsup} package to train a Convolutional PSD Autoencoder \cite{convpsd}. The encoder is a convolution followed by the hyperbolic tangent whereas the decoder is simply a convolution. The idea is to learn filters by finding a sparse encoding of patches of the input images. These filters can later be used to initialize a convnet for supervised training. However our results here were terrible.
 
 Second, we tried to build our own stacked convolutional autoencoders (CAE) from scratch, starting with \autocite{zhao2015stacked}.
+\subsection{Our Model}
+Our model consisted of three convolutional 'Encoder' layers, followed by a classifier (full architecture see \autoref{app:B}). The specific architecture followed from our attempt to build a stacked CAE to initialize our convolutional weights (see \autoref{sec:scae}); after this failed we used the same architecture with randomly initialized weights for classification.
 \subsection{Visualization}
 \subsubsection{Filters}
 
 \subsubsection{t-SNE}
-We ran t-SNE on the output of each of the stacked encoders. As one can see from the following three figures, visually identifiable clusters emerge especially from the second and third encoder outputs. Recall that our final model did not use any unsupervised pre-training and so these clusters come from purely supervised training.
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-1}
-	\caption{t-SNE applied to output of first encoder}
-	\label{fig:enc-1}
-\end{figure}
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-2}
-	\caption{t-SNE applied to output of second encoder}
-	\label{fig:enc-2}
-\end{figure}
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-3}
-	\caption{t-SNE applied to output of third encoder}
-	\label{fig:enc-3}
-\end{figure}
+We ran t-SNE on the output of each of the stacked encoders.  As one can see from the three figuresin \autoref{app:D}, visually identifiable clusters emerge especially from the second and third encoder outputs. Recall that our final model did not use any unsupervised pre-training and so these clusters come from purely supervised training.
 \subsection{Data Augmentation}
-We extended the given \texttt{BatchFlip} module to perform the following transformation for every input in training mode:
+We extended the given \texttt{BatchFlip} module to an \texttt{Augmentation} module that performed the following transformations for every input in training mode:
 \begin{itemize}
 \item Rotate by a Radians chosen uniformly at random from [-0.2,0.2]
 \item Translate the x- and y-coordinates by randomly chosen integers between -9 and 9
 \item Add Gaussian Noise with a mean of zero and standard deviation of 0.3 to the U and V components, then divide by 1.3 to ensure the inputs come from a distribution with zero mean and unit variance. 
 \end{itemize}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth, keepaspectratio=true]{augmentation}
-  \caption{Six randomly selected input images and 5 exemplary transformations; the original (normalized) images are to the left}
-  \label{fig:aug}
-\end{figure}
-Adding the Augmentation module increased the speed of convergence of the model. It also helped against overfitting and resulted in a train accuracy close to the validation accuracy.
-\subsection{Stacked CAEs}
+Adding the Augmentation module rapidly increased the speed of convergence of the model ; it achieved after only 30 iterations an accuracy similar to 100 iterations without augmentations. It also helped against overfitting and resulted in a train accuracy close to the validation accuracy. In \autoref{app:E}, examples of the transformations are given.
+\subsection{Stacked CAEs}\label{sec:scae}
 Following loosely the example of several papers \autocite{zhao2015stacked,masci2011stacked}, we built a stacked CAE that was trained to minimize reconstruction error. In \autoref{app:A}, the full model architecture is given verbatim. Our architecture was based on two building blocks:
 \begin{itemize}
 \item An Encoder Module, consisting of a Convolutional layer, a Spatial-Max-Pooling layer, and Dropout/ReLU/Batch Normalization
 \item A Decoder Module, consisting of a Spatial-Max-Unpooling layer, a Convolution, and ReLU/BatchNormalization
 \end{itemize}
 We started by training a single Encoder/Decoder pair by reconstruction loss. We then step-by-step inserted Encoder/Decoder pairs in between the pre-trained Encoder/Decoder pair. After adding two more pairs the model structure looked as follows:\\
-\centerline{INPUT - [ENC A - [ENC B - [ENC C - DEC C] - DEC B] - DEC A] - OUTPUT}
+\centerline{INPUT $\to$ [ENC A - [ENC B - [ENC C - DEC C] - DEC B] - DEC A] $\to$ OUTPUT}
 The loss function used was the sum of the reconstruction losses for each Decoder/Encoder Pair.
 \[\mathcal{L} = \sum_{i=A,B,C} \|\text{Input(i)} - \text{Output(i)}\|_2 \] 
 
@@ -223,6 +201,40 @@ nn.Sequential {
   }
 }
 \end{verbatim}
+
+\section{Kaggle Performance}\label{app:B}
+
+\section{Supervised Model}\label{app:C}
+
+
+
+\section{t-SNE}\label{app:D}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-1}
+	\caption{t-SNE applied to output of first encoder}
+	\label{fig:enc-1}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-2}
+	\caption{t-SNE applied to output of second encoder}
+	\label{fig:enc-2}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth, keepaspectratio=true]{enc-3}
+	\caption{t-SNE applied to output of third encoder}
+	\label{fig:enc-3}
+\end{figure}
+\section{Augmenattions}\label{app:E}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth, keepaspectratio=true]{augmentation}
+  \caption{Six randomly selected input images and 5 exemplary transformations; the original (normalized) images are to the left}
+  \label{fig:aug}
+\end{figure}
 
 \end{document}
 
