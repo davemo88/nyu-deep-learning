@@ -104,6 +104,7 @@ We tried to use the unlabeled data in two ways. First, we tried to build our own
 Our model consisted of three convolutional 'Encoder' layers, followed by a classifier (full architecture see \autoref{app:B}). The specific architecture followed from our attempt to build a stacked CAE to initialize our convolutional weights (see \autoref{sec:scae}); after this failed we used the same architecture with randomly initialized weights for classification.
 \subsection{Visualization}
 \subsubsection{Filters}
+We included filters from each of the three coders (see \autoref{app:F}). One can see that the filters have some structure, e.g. the first encoder's filters look like the desired edges and color blobs.
 
 \subsubsection{t-SNE}
 We ran t-SNE on the output of each of the stacked encoders.  As one can see from the figures in \autoref{app:D}, visually identifiable clusters emerge especially from the second and third encoder outputs. Recall that our final model did not use any unsupervised pre-training and so these clusters come from purely supervised training.
@@ -252,7 +253,26 @@ nn.Sequential {
 }
 
 \end{verbatim}
+\section{Filters}\label{app:F}
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth, keepaspectratio=true]{filters-1}
+	\caption{filters from convolutional layer of first encoder}
+	\label{fig:filters-1}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth, keepaspectratio=true]{filters-2}
+	\caption{filters from convolutional layer of second encoder}
+	\label{fig:filters-2}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth, keepaspectratio=true]{filters-3}
+	\caption{filters from convolutional layer of third encoder}
+	\label{fig:filters-3}
+\end{figure}
 
 \section{t-SNE}\label{app:D}
 
@@ -274,6 +294,9 @@ nn.Sequential {
 	\caption{t-SNE applied to output of third encoder}
 	\label{fig:enc-3}
 \end{figure}
+
+
+
 \section{Augmentations}\label{app:E}
 \begin{figure}[H]
   \centering
