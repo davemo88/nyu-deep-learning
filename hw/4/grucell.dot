@@ -1,0 +1,170 @@
+digraph G {
+	graph [bb="0,0,823.8,2023.4"];
+	node [label="\N",
+		shape=oval
+	];
+	n1	 [height=1.2571,
+		label="Node1\nmodule = nn.CAddTable\lreverseMap = {}\lmapindex = {Node3,Node4}",
+		pos="698.15,151.97",
+		tooltip="[grucell.lua]:20_",
+		width=3.4902];
+	n2	 [height=0.98209,
+		label="Node2\ninput = {}\lreverseMap = {}",
+		pos="698.15,35.355",
+		tooltip="[[C]]:-1_",
+		width=2.1687];
+	n1 -> n2	 [pos="e,698.15,70.953 698.15,106.65 698.15,98.235 698.15,89.421 698.15,80.992"];
+	n3	 [height=0.98209,
+		label="Node3\nmodule = nn.Identity\lreverseMap = {}",
+		pos="573.15,1648.1",
+		tooltip="[grucell.lua]:6_",
+		width=2.6307];
+	n3 -> n1	 [pos="e,733.53,195.82 629.44,1619.6 690.13,1585.6 778.15,1521.4 778.15,1435.7 778.15,1435.7 778.15,1435.7 778.15,403.98 778.15,327.34 \
+782.18,304.55 754.15,233.22 750.29,223.39 745,213.61 739.21,204.43"];
+	n7	 [height=1.2571,
+		label="Node7\nmodule = nn.CSubTable\lreverseMap = {}\lmapindex = {Node10,Node3}",
+		pos="619.15,404.98",
+		tooltip="[grucell.lua]:22_",
+		width=3.6277];
+	n3 -> n7	 [pos="e,630.24,450.42 605.07,1614.7 614.5,1603.5 623.95,1590.3 630.15,1576.7 656.59,1518.8 655.15,1499.4 655.15,1435.7 655.15,1435.7 655.15,\
+1435.7 655.15,637.21 655.15,576.08 642.71,506.93 632.46,460.31"];
+	n25	 [height=0.98209,
+		label="Node25\nmodule = nn.Linear(10 -> 30)\lreverseMap = {}",
+		pos="491.15,1541.4",
+		tooltip="[grucell.lua]:8_",
+		width=3.6102];
+	n3 -> n25	 [pos="e,517.49,1576 547.2,1614 539.8,1604.5 531.63,1594.1 523.88,1584.2"];
+	n4	 [height=1.2571,
+		label="Node4\nmodule = nn.CMulTable\lreverseMap = {}\lmapindex = {Node6,Node7}",
+		pos="619.15,278.48",
+		tooltip="[grucell.lua]:21_",
+		width=3.4902];
+	n4 -> n1	 [pos="e,670.52,196.51 646.56,234.28 652.56,224.82 658.96,214.72 665.15,204.97"];
+	n5	 [height=1.2571,
+		label="Node5\ninput = {}\lselectindex = 2\lreverseMap = {}",
+		pos="522.15,1764.7",
+		tooltip="[[C]]:-1_-2",
+		width=2.1687];
+	n5 -> n3	 [pos="e,558.05,1683 541.29,1720.7 545.4,1711.5 549.74,1701.7 553.86,1692.4"];
+	n6	 [height=0.98209,
+		label="Node6\nmodule = nn.Sigmoid\lreverseMap = {}",
+		pos="512.15,764.71",
+		tooltip="[grucell.lua]:15_",
+		width=2.7075];
+	n6 -> n4	 [pos="e,531.91,311.06 497.19,729.74 467.39,656.47 409.21,480.44 479.15,359.73 489.53,341.81 505.59,327.55 523.17,316.33"];
+	n7 -> n4	 [pos="e,619.15,323.76 619.15,359.39 619.15,351.15 619.15,342.47 619.15,333.98"];
+	n8	 [height=0.98209,
+		label="Node8\nreverseMap = {}\lnSplitOutputs = 2",
+		pos="379.15,1881.3",
+		tooltip="[[C]]:-1_ split at [...davemo88/torch/install/share/lua/5.1/nngraph/gmodule.lua]:96-mnode",
+		width=2.2723];
+	n8 -> n5	 [pos="e,477.16,1801.8 417.1,1849.9 433.1,1837.1 452,1821.9 469.32,1808"];
+	n26	 [height=1.2571,
+		label="Node26\ninput = {}\lselectindex = 1\lreverseMap = {}",
+		pos="292.15,1764.7",
+		tooltip="[[C]]:-1_-1",
+		width=2.1687];
+	n8 -> n26	 [pos="e,322.96,1806.3 354.22,1847.5 346.38,1837.2 337.55,1825.5 329.06,1814.3"];
+	n9	 [height=0.98209,
+		label="Node9\nmodule = nn.SelectTable\lreverseMap = {}",
+		pos="516.15,881.33",
+		tooltip="[grucell.lua]:15_",
+		width=3.0541];
+	n9 -> n6	 [pos="e,513.35,800.08 514.95,845.94 514.56,834.72 514.12,822.1 513.7,810.24"];
+	n10	 [height=0.98209,
+		label="Node10\nmodule = nn.Tanh\lreverseMap = {}",
+		pos="304.15,521.6",
+		tooltip="[grucell.lua]:16_",
+		width=2.3212];
+	n10 -> n7	 [pos="e,530.51,438.24 366.38,497.95 410.43,481.93 470.4,460.11 520.88,441.74"];
+	n11	 [height=0.98209,
+		label="Node11\ninput = {}\lreverseMap = {}",
+		pos="379.15,1988",
+		tooltip="[[C]]:-1_",
+		width=2.1687];
+	n11 -> n8	 [pos="e,379.15,1916.9 379.15,1952.5 379.15,1944.3 379.15,1935.5 379.15,1927"];
+	n12	 [height=0.98209,
+		label="Node12\nmodule = nn.SplitTable\lreverseMap = {}",
+		pos="491.15,1094.7",
+		tooltip="[grucell.lua]:13_",
+		width=2.9018];
+	n12 -> n9	 [pos="e,512.08,916.75 495.22,1059.3 499.49,1023.2 506.21,966.38 510.88,926.89"];
+	n24	 [height=0.98209,
+		label="Node24\nmodule = nn.SelectTable\lreverseMap = {}",
+		pos="337.15,988.04",
+		tooltip="[grucell.lua]:14_",
+		width=3.0541];
+	n12 -> n24	 [pos="e,383,1020.2 445.78,1062.9 428.77,1051.3 409.28,1038.1 391.54,1026"];
+	n13	 [height=1.2571,
+		label="Node13\nmodule = nn.CAddTable\lreverseMap = {}\lmapindex = {Node15,Node16}",
+		pos="260.15,638.21",
+		tooltip="[grucell.lua]:16_",
+		width=3.7652];
+	n13 -> n10	 [pos="e,291.07,556.67 277.04,593.22 280.45,584.32 284.04,574.97 287.45,566.08"];
+	n14	 [height=0.98209,
+		label="Node14\nmodule = nn.Reshape(2x10)\lreverseMap = {}",
+		pos="491.15,1201.5",
+		tooltip="[grucell.lua]:13_",
+		width=3.4401];
+	n14 -> n12	 [pos="e,491.15,1130.3 491.15,1165.9 491.15,1157.7 491.15,1149 491.15,1140.5"];
+	n15	 [height=0.98209,
+		label="Node15\nmodule = nn.Narrow\lreverseMap = {}",
+		pos="94.149,1318.1",
+		tooltip="[grucell.lua]:17_",
+		width=2.6153];
+	n15 -> n13	 [pos="e,170.15,672.15 94.149,1282.6 94.149,1239 94.149,1161.8 94.149,1095.7 94.149,1095.7 94.149,1095.7 94.149,880.33 94.149,808.22 74.584,\
+779.07 115.15,719.46 126.83,702.29 143.46,688.42 161.31,677.36"];
+	n16	 [height=1.2571,
+		label="Node16\nmodule = nn.CMulTable\lreverseMap = {}\lmapindex = {Node19,Node20}",
+		pos="260.15,764.71",
+		tooltip="[grucell.lua]:18_",
+		width=3.7652];
+	n16 -> n13	 [pos="e,260.15,683.49 260.15,719.12 260.15,710.88 260.15,702.2 260.15,693.71"];
+	n17	 [height=1.2571,
+		label="Node17\nmodule = nn.CAddTable\lreverseMap = {}\lmapindex = {Node21,Node22}",
+		pos="491.15,1318.1",
+		tooltip="[grucell.lua]:9_",
+		width=3.7652];
+	n17 -> n14	 [pos="e,491.15,1237.1 491.15,1272.8 491.15,1264.3 491.15,1255.5 491.15,1247.1"];
+	n18	 [height=0.98209,
+		label="Node18\nmodule = nn.Linear(10 -> 30)\lreverseMap = {}",
+		pos="209.15,1541.4",
+		tooltip="[grucell.lua]:7_",
+		width=3.6102];
+	n18 -> n15	 [pos="e,88.825,1353.6 146.38,1510.4 130.69,1499.8 115.65,1486.4 106.15,1470 87.607,1438.1 85.813,1395.7 87.963,1363.9"];
+	n21	 [height=0.98209,
+		label="Node21\nmodule = nn.Narrow\lreverseMap = {}",
+		pos="209.15,1434.7",
+		tooltip="[grucell.lua]:10_",
+		width=2.6153];
+	n18 -> n21	 [pos="e,209.15,1470.2 209.15,1505.8 209.15,1497.7 209.15,1488.9 209.15,1480.4"];
+	n19	 [height=0.98209,
+		label="Node19\nmodule = nn.Sigmoid\lreverseMap = {}",
+		pos="291.15,881.33",
+		tooltip="[grucell.lua]:14_",
+		width=2.7075];
+	n19 -> n16	 [pos="e,272.09,809.86 281.85,845.94 279.6,837.61 277.13,828.51 274.7,819.52"];
+	n20	 [height=0.98209,
+		label="Node20\nmodule = nn.Narrow\lreverseMap = {}",
+		pos="235.15,1201.5",
+		tooltip="[grucell.lua]:19_",
+		width=2.6153];
+	n20 -> n16	 [pos="e,210.48,807.23 219.34,1166.4 191.64,1101.6 141.24,957.26 185.15,845.97 189.52,834.88 196.23,824.43 203.88,814.95"];
+	n21 -> n17	 [pos="e,406.54,1353.5 271.73,1408.2 308.54,1393.3 355.8,1374.1 397.03,1357.3"];
+	n22	 [height=0.98209,
+		label="Node22\nmodule = nn.Narrow\lreverseMap = {}",
+		pos="491.15,1434.7",
+		tooltip="[grucell.lua]:11_",
+		width=2.6153];
+	n22 -> n17	 [pos="e,491.15,1363.6 491.15,1399.3 491.15,1391.2 491.15,1382.5 491.15,1373.8"];
+	n23	 [height=0.98209,
+		label="Node23\nmodule = nn.Identity\lreverseMap = {}",
+		pos="264.15,1648.1",
+		tooltip="[grucell.lua]:5_",
+		width=2.6307];
+	n23 -> n18	 [pos="e,227.11,1576.6 246.29,1613.1 241.68,1604.3 236.66,1594.8 231.84,1585.6"];
+	n24 -> n19	 [pos="e,306.09,916.33 322.09,952.75 318.28,944.07 314.13,934.64 310.15,925.59"];
+	n25 -> n20	 [pos="e,248.8,1236.9 435.93,1509.3 419.33,1498.3 401.88,1484.9 388.15,1470 325.01,1401.6 277.04,1302.7 252.77,1246.2"];
+	n25 -> n22	 [pos="e,491.15,1470.2 491.15,1505.8 491.15,1497.7 491.15,1488.9 491.15,1480.4"];
+	n26 -> n23	 [pos="e,272.56,1683.5 281.4,1719.7 279.3,1711.1 277.09,1702.1 274.98,1693.4"];
+}
