@@ -1,0 +1,283 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{nips15submit_e,times}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\allowdisplaybreaks
+\usepackage{bm}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amssymb}
+\usepackage{appendix}
+\usepackage[backend=biber]{biblatex}
+\addbibresource{bib.bib}
+
+%\documentstyle[nips14submit_09,times,art10]{article} % For LaTeX 2.09
+
+\title{Assignment 3 Deep Learning Spring 2016}
+
+
+\author{
+David Kasofsky  \\
+\texttt{dk2353@nyu.edu}  \\
+}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to \LaTeX{} to determine where to break
+% the lines. Using \AND forces a linebreak at that point. So, if \LaTeX{}
+% puts 3 of 4 authors names on the first line, and the last on the second
+% line, try using \AND instead of \And before the third author name.
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+%\nipsfinalcopy % Uncomment for camera-ready version
+
+\begin{document}
+
+\maketitle
+
+\section{General Questions}
+\subsection{}
+If there are no non-linearities, we can represent each module as multiplication by a weight matrix. We can simply combine these weight matrices together to obtain a single matrix with produces the same result as the sequence of multiplications.
+\subsection{}
+In the case of sparse coding the dictionary is an overcomplete basis for the projected space, i.e. a matrix. However in autoencoders the dictionary is not matrix: it is a nonlinearity applied to a matrix multiplication, e.g. $\sigma(WX + B)$, and so is a nonlinear function.
+
+\section{Softmax Regression Gradient Calculation}
+\subsection{}
+Let $y_t = 1$, i.e. $t$ is the index of the true label. Since $\textbf{y}$ is a one-hot vector, only one summand in the loss $l(\textbf{y},\hat{\textbf{y}}) = - \sum_i y_i \log \hat{y}_i$ will be nonzero: . Therefore we can proceed as follows:
+
+\begin{align*}
+\frac{\partial l}{\partial W_{i j}} & = \frac{\partial}{\partial W_{i j}} - y_t \log \hat{y}_t\\
+& = -\frac{1}{\hat{y}_t} \frac{\partial \hat{y}_t}{\partial W_{i j}}\\
+& = -\frac{1}{\hat{y}_t} \frac{\partial \hat{y}_t}{\partial (W\textbf{x} + B)}\frac{\partial (W\textbf{x} + B)}{\partial W_{i j}}\\
+& = -\frac{1}{\hat{y}_t} \frac{\partial \hat{y}_t}{\partial (W\textbf{x} + B)} x_j
+\end{align*}
+
+Now we must consider two cases and use the results from the first assignment:
+
+\begin{itemize}
+\item $i \ne t$
+\begin{align*}
+-\frac{1}{\hat{y}_t} \frac{\partial \hat{y}_t}{\partial (W\textbf{x} + B)} x_j
+& = \frac{\hat{y}_j\hat{y}_t x_j}{\hat{y}_t}\\
+& = \hat{y}_j x_j
+\end{align*}
+\item $i = t$
+\begin{align*}
+-\frac{1}{\hat{y}_t} \frac{\partial \hat{y}_t}{\partial (W\textbf{x} + B)} x_j
+& = -\frac{(\hat{y}_t^2 - \hat{y}_t) x_j}{\hat{y}_t}\\
+& = -(\hat{y}_t - 1) x_j
+\end{align*}
+\end{itemize}
+
+\subsection{}
+If $\hat{y}_{c2} = 1$, then each other component of $\hat{y}$ must be 0. However this is impossible because the numerator of the softmax is $\exp(\cdot)$, which is never 0 except in the limit. If it were possible then the loss function could become undefined since $\log 0$ would appear.
+\section{Chain Rule}
+\subsection{}
+We can imagine the function $f$ as the composition of several functions, e.g.as a neural network. Then $f(x,y) = d(g(x,y),h(x))$ where:
+\begin{align*}
+d(x,y) = \frac{x}{y}\\
+g(x,y) = x^2 + \sigma(y)\\
+h(x,y) = 3x + y - \sigma(x)\\
+\end{align*}
+Now to find $\frac{\partial f}{\partial x}$:
+\begin{align*}
+\frac{\partial f}{\partial x} = \frac{\partial d(g(x,y),h(x,y)}{\partial g(x,y)}\frac{\partial g(x,y)}{\partial x} + \frac{\partial d(g(x,y),h(x,y)}{\partial h(x,y)}\frac{\partial h(x,y)}{\partial x}
+\end{align*}
+\noindent and similarly for $\frac{\partial f}{\partial y}$:
+\begin{align*}
+\frac{\partial f}{\partial y} = \frac{\partial d(g(x,y),h(x,y)}{\partial g(x,y)}\frac{\partial g(x,y)}{\partial y} + \frac{\partial d(g(x,y),h(x,y)}{\partial h(x,y)}\frac{\partial h(x,y)}{\partial y}
+\end{align*}
+\subsection{}
+\begin{align*}
+\frac{\partial g(x,y)}{\partial x} \vert_{1,0} = 2\\
+\frac{\partial g(x,y)}{\partial y} \vert_{1,0} = \frac{1}{4}\\
+\frac{\partial h(x,y)}{\partial x} \vert_{1,0} = 3 - \frac{e}{(e+1)^2}\\
+\frac{\partial h(x,y)}{\partial y} \vert_{1,0} = 1\\
+\frac{\partial d(x,y)}{\partial x} \vert_{1,0} = ...\\
+\frac{\partial d(x,y)}{\partial y} \vert_{1,0} = ...
+\end{align*}
+etc. Substitute these values in the above formulas.
+\section{Variants of Pooling}
+\subsection{}
+\begin{itemize}
+  \item LP Pooling (SpatialLPPooling in Torch)
+  \item Max Pooling (SpatialMaxPooling in Torch)
+  \item Average Pooling (SpatialAveragePooling in Torch)
+\end{itemize}
+\subsection{}
+Suppose the pooling module receives an $n \times n$ patch $x$. Then the mathematical operation performed in each case is:
+\begin{itemize}
+  \item Max Pooling $ = \underset{i,j}{\text{max }} x_{i,j} $
+  \item LP Pooling $ = \frac{1}{n^2}\left(\sum_{i j} \vert x_{i,j}\vert^P\right)^{\frac{1}{P}}$
+  \item Average Pooling = $ \frac{1}{n^2} \sum_{i,j} x_{i,j} $
+\end{itemize}
+\subsection{}
+Max Pooling is included in deep learning systems to reduce the dimension after a convolution since a convolution usually increases the dimension of the representation of the input. Additionally max pooling is very fast and efficient to perform. Max pooling (and all pooling for that matter) exploits the local spatial similarity of mosts images.
+\section{Convolution}
+\subsection{}
+This convolution will produce 9 values. Our kernel is $3 \times 3$ and our input is $5 \times 5$, so we can position the kernel in $(5 - (5 - 3))^2$ ways.
+\subsection{}
+The output of the forward pass is
+\[ \begin{bmatrix}
+109&92&72 \\ 108&85&74 \\ 110&74&79 
+\end{bmatrix} \]
+which was computed using the \texttt{nn.SpatialConvolution} module.
+\subsection{}
+The output of the gradient w.r.t. the input propogated backwards is 
+\[\begin{bmatrix}
+ 4&7&10&6&3 \\ 9&17&25&16&8 \\ 11&23&34&23&11 \\ 7&16&24&17&8 \\ 2&6&9&7&3
+\end{bmatrix}\]
+once again computed using the \texttt{nn.SpatialConvolution} module.
+\section{Optimization}
+\subsection{}
+An autoencoder is trained to reproduce its input. The loss is then:\\
+$L = \frac{1}{2}\vert\vert W X - X \vert\vert_2^2$
+\subsection{}
+$\nabla_{W_t} L = X^T (W_t X - X)$
+\subsection{}
+$W_{t+1} = W_t + \eta \nabla_{W_t} L$
+\subsection{}
+$W_{t+1} = W_t + \eta \nabla_{W_t} L + m \nabla_{W_{t-1}} L$\\
+
+A momentum term updates the weights not only using the current gradient but also the previous gradient. Most of all this is meant to help the network escape local minima.
+
+\section{Top-$k$ Error}
+The top-$k$ error is the proportion of test data points where the correct class is not among the $k$ most likely classes output by the model. The top-$k$ error considers a model to have made an error when the correct class is not among the $k$ most likely classes.
+
+ImageNet uses top-1 and top-5 errors because the number of classes is large and there may be several classes similar to the correct class. Thus the difference in probability between the most likely class and the correct class may not be very large, e.g. the correct class may be in the top 5 most likely classes.
+\section{t-SNE}
+\subsection{}
+The crowding problem arises when mapping high-dimensional data into lower dimension. If one wants to faithfully represent the distances between relatively nearby points, then relatively distant points will appear much too far away. Thus we are either forced to crowd the nearby points together or push the distant points too far apart. E.g. imagine a bunch of points which lie in a $d$-dimensional sphere with radius $r$. If we are to represent the points in two dimensions, the volume is reduced by a factor of $r^{d-2}$.
+
+t-SNE alleviates in the following way. In the high-dimensional representation, the distances are converted to a probabilities using a Gaussian distribution. In the low-dimensional representation, we do the same except using a distribution with much heavier tails, in this case a Student $t$-distribution. This has the effect that the optimization works in same way at all scales (distances) except the smallest ones.
+\subsection{}
+
+Let $d_{i j} = \vert\vert y_i - y_j \vert\vert$. First let us the consider $\frac{\partial q_{i j}}{\partial y_m}$:
+
+\begin{align*}
+\frac{\partial q_{i j}}{\partial y_m} & = \frac{\partial}{\partial y_m} \frac{\exp(-d_{i j}^2)}{\sum_{k \ne l} \exp(-d_{k l}^2)}\\
+& = 0 + \exp(-d_{i j}^2) \frac{\partial}{\partial y_m} (\sum_{k \ne l} \exp(-d_{k l}^2))^{-1}\\
+& = \frac{\exp(-d_{i j}^2)}{-(\sum_{k \ne l} \exp(-d_{k l}^2))^2} \frac{\partial}{\partial y_m} \sum_{k \ne l} \exp(-d_{k l}^2)\\
+& = \frac{2 \exp(-d_{i j}^2)}{-(\sum_{k \ne l} \exp(-d_{k l}^2))^2} \frac{\partial}{\partial y_m} \sum_{k} \exp(-d_{k m}^2)\\
+& = \frac{2 \exp(-d_{i j}^2)}{-(\sum_{k \ne l} \exp(-d_{k l}^2))^2} \sum_{k} \frac{\partial}{\partial y_m} \exp(-d_{k m}^2)\\
+& = \frac{2 \exp(-d_{i j}^2)}{-(\sum_{k \ne l} \exp(-d_{k l}^2))^2} \sum_{k} 2 (y_k - y_m) \exp(-d_{k m}^2)\\
+& = \frac{4 \exp(-d_{i j}^2)}{(\sum_{k \ne l} \exp(-d_{k l}^2))^2} \sum_{k} (y_m - y_k) \exp(-d_{k m}^2)\\
+& = \frac{4 q_{i j}}{\sum_{k \ne l} \exp(-d_{k l}^2)} \sum_{k} (y_m - y_k) \exp(-d_{k m}^2)\\
+& = 4 q_{i j} \sum_{k} (y_m - y_k) \frac{\exp(-d_{k m}^2)}{\sum_{k \ne l} \exp(-d_{k l}^2)}\\
+& = 4 q_{i j} \sum_{k} (y_m - y_k) q_{k m}\\
+\end{align*}
+
+\noindent Now we consider $\frac{\partial q_{i j}}{\partial y_i}$:
+
+\begin{align*}
+\frac{\partial q_{i j}}{\partial y_i} & = \frac{\partial}{\partial y_i} \frac{\exp(-d_{i j}^2)}{\sum_{k \ne l} \exp(-d_{k l}^2)}\\
+& = \frac{-2(y_i - y_j)\exp(-d_{i j}^2)}{\sum_{k \ne l} \exp(-d_{k l}^2)} + \exp(-d_{i j}^2) \frac{\partial}{\partial y_i} (\sum_{k \ne l} \exp(-d_{k l}^2))^{-1}\\
+& = -2(y_i - y_j)q_{i j} + \exp(-d_{i j}^2) \frac{\partial}{\partial y_i} (\sum_{k \ne l} \exp(-d_{k l}^2))^{-1}\\
+\end{align*}
+
+\noindent We use the result of our deriviation of $\frac{\partial q_{i j}}{\partial y_m}$ to conclude:
+
+\begin{align*}
+\frac{\partial q_{i j}}{\partial y_i} = 2(y_j - y_i)q_{i j} + 4 q_{i j} \sum_{k} (y_i - y_k) q_{k i}
+\end{align*}
+
+\noindent Note that by symmetry $\frac{\partial q_{i j}}{\partial y_i} = \frac{\partial q_{j i}}{\partial y_i}$.
+
+\noindent Finally consider $\frac{\partial C}{\partial y_m}$:
+\begin{align*}
+\frac{\partial C}{\partial y_m} & = \frac{\partial}{\partial y_m} \sum_i \sum_j p_{i j} \log \frac{p_{i j}}{q_{i j}}\\
+& = \frac{\partial}{\partial y_m} \sum_i \sum_j p_{i j} \log p_{i j} - p_{i j}\log {q_{i j}})\\
+& = \sum_i \sum_j \frac{\partial}{\partial y_m} p_{i j} \log p_{i j} - \frac{\partial}{\partial y_m} p_{i j}\log {q_{i j}}\\
+& = \sum_i \sum_j - \frac{\partial}{\partial y_m} p_{i j}\log {q_{i j}}\\
+& = \sum_i \sum_j \frac{- p_{i j}}{q_{i j}} \frac{\partial}{\partial y_m} q_{i j}\\
+& = - \sum_i \left[ \frac{p_{i m}}{q_{i m}} \frac{\partial}{\partial y_m} q_{i m} + \frac{p_{m i}}{q_{m i}} \frac{\partial}{\partial y_m} q_{m i} \right] - \sum_{i,j \ne m} \frac{p_{i j}}{q_{i j}} \frac{\partial}{\partial y_m} q_{i j}\\
+& = - 2 \sum_i \frac{p_{i m}}{q_{i m}} \frac{\partial}{\partial y_m} q_{i m} - \sum_{i,j \ne m} \frac{p_{i j}}{q_{i j}} \frac{\partial}{\partial y_m} q_{i j}\\
+& = - 2 \sum_i \left[ \frac{p_{i m}}{q_{i m}} \left(2(y_i - y_m)q_{i m} + 4 q_{i m} \sum_{k} (y_m - y_k) q_{k i} \right)\right] - \sum_{i,j \ne m} \frac{p_{i j}}{q_{i j}} \frac{\partial}{\partial y_m} q_{i j}\\
+& = - 4 \sum_i \left[ p_{i m} \left((y_i - y_m) + 2 \sum_{k} (y_m - y_k) q_{k i} \right)\right] - \sum_{i,j \ne m} \frac{p_{i j}}{q_{i j}} \frac{\partial}{\partial y_m} q_{i j}\\
+& = - 4 \sum_i \left[ p_{i m} \left((y_i - y_m) + 2 \sum_{k} (y_m - y_k) q_{k m} \right)\right] - \sum_{i,j \ne m} \frac{p_{i j}}{q_{i j}} 4 q_{i j} \sum_{k} (y_m - y_k) q_{k m}\\
+& = - 4 \sum_i \left[ p_{i m} \left((y_i - y_m) + 2 \sum_{k} (y_m - y_k) q_{k m} \right)\right] - 4 \sum_{i,j \ne m} p_{i j} \sum_{k} (y_m - y_k) q_{k m}\\
+& = 4 \left[ \sum_i \left[ p_{i m} \left((y_m - y_i) - 2 \sum_{k} (y_m - y_k) q_{k m} \right)\right] - \sum_{i,j \ne m} p_{i j} \sum_{k} (y_m - y_k) q_{k m} \right]\\
+& = 4 \left[ \sum_i \left[ p_{i m} \left((y_m - y_i) - 2 \sum_{k} (y_m - y_k) q_{k m} \right)\right] - \sum_{i,j \ne m} p_{i j} \sum_{k} (y_m - y_k) q_{k m} \right]\\
+\end{align*}
+
+\noindent Note that $\sum_{i \ne j} p_{i j} = 1$ by definition. So we can reorganize these sums to find:
+
+\begin{align*}
+& = 4 \left( \sum_i p_{i m} (y_m - y_i) - \left[ \sum_i 2 p_{i m} \sum_{k} (y_m - y_k) q_{k m} + \sum_{i,j \ne m} p_{i j} \sum_{k} (y_m - y_k) q_{k m} \right] \right)\\
+& = 4 \left( \sum_i p_{i m} (y_m - y_i) - \left[ \sum_{i \ne j} p_{i j} \sum_{k} (y_m - y_k) q_{k m} \right] \right)\\
+& = 4 \left( \sum_i p_{i m} (y_m - y_i) - \left[ \sum_{k} (y_m - y_k) q_{k m} \right] \right)\\
+& = 4 \sum_i (p_{i m} - q_{i m})(y_m - y_i)
+\end{align*}
+
+\section{Proximal Gradient Descent}
+\subsection{}
+First, let
+\begin{equation}
+  f_t(\textbf{x}) = \frac{1}{2} \vert \vert S_t(\textbf{x}) - \textbf{x} \vert \vert_2^2 + t \vert \vert S_t(\textbf{x}) \vert \vert_1
+\notag
+\end{equation}
+\noindent i.e.
+\begin{equation}
+  f_t(\textbf{x}) = \frac{1}{2} \vert \vert (\vert \textbf{x} \vert - t \textbf{1})_+ \odot \text{sign}(\textbf{x}) - \textbf{x} \vert \vert_2^2 + t \vert \vert (\vert \textbf{x} \vert - t \textbf{1})_+ \odot \text{sign}(\textbf{x}) \vert \vert_1
+\notag
+\end{equation}
+
+\noindent We want to show that, for all $\textbf{x}$, $\textbf{0}$ will be a subgradient of $f$ with respect to each component of $\textbf{x}$. Let $x$ be a component of $\textbf{x}$. We must consider several cases:
+\begin{itemize}
+  \item $\vert x \vert < t$. Then the resulting component of $S_t(\textbf{x})$ is 0. The corresponding of component of the gradient of $\frac{1}{2} \vert \vert S_t(\textbf{x}) - \textbf{x} \vert \vert_2^2$ is simply $-x$. The corresponding subdifferential of $t \vert \vert S_t(\textbf{x}) \vert \vert_1$ is the interval $[-t, t]$. Since $\vert x \vert < t$ by assumption, $0 \in [-t-x, t-x]$.
+  \item $x < -t$. Then the resulting component of $S_t(\textbf{x})$ is $-(|x| - t) = x+t$. The corresponding of component of the gradient of $\frac{1}{2} \vert \vert S_t(\textbf{x}) - \textbf{x} \vert \vert_2^2$ is then $t$. The corresponding subdifferential of $t \vert \vert S_t(\textbf{x}) \vert \vert_1$ is $-t$ and so the corresponding component of the gradient is $t-t = 0$.
+  \item $x > t$. Then the resulting component of $S_t(\textbf{x})$ is $x - t$. The corresponding of component of the gradient of $\frac{1}{2} \vert \vert S_t(\textbf{x}) - \textbf{x} \vert \vert_2^2$ is then $-t$. The corresponding subdifferential of $t \vert \vert S_t(\textbf{x}) \vert \vert_1$ is $t$ and so the corresponding component of the gradient is $-t + t = 0$.
+\end{itemize}
+
+\noindent Thus in all cases the subdifferential of the $f_t$ contains $\textbf{0}$.
+
+\subsection{}
+
+ISTA minimizes the objective function
+\begin{equation}
+  f(x) = \frac{1}{2} \vert \vert \textbf{y} - W \textbf{x} \vert \vert_2^2 + \lambda \vert \vert \textbf{x} \vert \vert_1
+\notag
+\end{equation}
+
+\noindent We have that $g(x) = \frac{1}{2} \vert \vert \textbf{y} - W \textbf{x} \vert \vert_2^2$ is convex and differentiable and that $h(x) = \lambda \vert \vert \textbf{x} \vert \vert_1$ is convex and simple. Furthermore we have that:
+\begin{equation}
+\begin{split}
+\text{prox}_{h, 1/L}(\textbf{x}_k - \frac{1}{L} \nabla g(\textbf{x}_k)) = \underset{\textbf{z}}{\text{argmin }} \frac{1}{2} \vert \vert \textbf{z} - (\textbf{x}_k - \frac{1}{L} \nabla g(\textbf{x}_k)) \vert \vert_2^2 + \frac{\lambda}{L} \vert \vert \textbf{z} \vert \vert_1\\
+= \text{prox}_{\vert \vert \cdot \vert \vert_1, \lambda/L}(\textbf{x}_k - \frac{1}{L} \nabla g(\textbf{x}_k))\\
+= S_{\lambda/L}(\textbf{x}_k - \frac{1}{L} \nabla g(\textbf{x}_k))\\
+\end{split}
+\notag
+\end{equation}
+
+\noindent This last equality holds by the previous part. The update rule used by ISTA is
+\begin{equation}
+\textbf{x}_{k+1} = S_{\lambda/L}(\textbf{x}_k - \frac{1}{L}W (W\textbf{x}_k - \textbf{y})) = S_{\lambda/L}(\textbf{x}_k - \frac{1}{L} \nabla g(\textbf{x}_k))
+\notag
+\end{equation}
+and so ISTA is a proximal gradient method.
+
+\subsection{}
+
+First recall that $u = \text{prox}_{h,t}(x)$ minimizes the function $\frac{1}{2}\vert\vert x-u \vert\vert_2^2 + t h(u)$. By the first part of this question, we know that $\textbf{0} \in \partial f(u)$, i.e. $\textbf{0} \in \lbrace u - x\rbrace + t \partial h(u)$. This implies that $x - u \in t \partial h(u)$ and so $\frac{x - u}{t}\in\partial(h)$.
+
+\subsection{}
+
+By definition we have that $x_{k+1} = \text{prox}_{h, \alpha_k}(x_k - \nabla g(x_k))$. Then by the previous part we know that:
+\begin{align*}
+\frac{x_k - \alpha_k \nabla g(x_k) - \text{prox}_{h, \alpha_k}(x_k - \alpha_k \nabla g(x_k))}{\alpha_k} \in \partial h(x_{k+1})\\
+\implies \frac{x_k - \text{prox}_{h, \alpha_k}(x_k - \alpha_k \nabla g(x_k))}{\alpha_k} - \nabla g(x_k) \in \partial h(x_{k+1})
+\end{align*}
+
+\noindent Once again by definition we may conlude $G_{\alpha_k}(x_k) - \nabla g(x_k) \in \partial h(x_{k+1})$.
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
